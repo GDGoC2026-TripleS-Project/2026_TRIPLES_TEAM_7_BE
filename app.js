@@ -4,24 +4,29 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var swaggerUi = require('swagger-ui-express');
-var { specs } = require('./config/swaggerConfig');
+var swagger = require('./config/swaggerConfig');
+var dotenv =  require('dotenv');
 
-// var indexRouter = require('./routes/index');
-// var usersRouter = require('./routes/users');
+dotenv.config();    // process.env 설정
 
-var app = express();
+require('./config/firebaseConfig');
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+const app = express();
+
+app.set('port', process.env.PORT || 3000);
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swagger.specs));
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+var indexRouter = require('./src/routes/index');
+var authRouter = require('./src/routes/googleAuth');
 
-// 라우트 경로 설정
-// app.use('/api', indexRouter);
-// app.use('/api/users', usersRouter);
+app.use('/', indexRouter);
+app.use('/auth', authRouter);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
@@ -36,8 +41,7 @@ app.use((err, req, res, next) => {
 
   // render the error page
   res.status(err.status || 500);
-  res.render('error');
+  res.json({ error: err.message });
 });
- 
-app.set('port', process.env.PORT || 3000);
+
 module.exports = app;
