@@ -37,4 +37,8 @@ fabric.properties
 uploads
 .env
 node_modules
+<<<<<<< HEAD
 firebase-service-account.json
+=======
+config/config.json
+>>>>>>> 8a8432a (feat:match-checklist 중간저장)
