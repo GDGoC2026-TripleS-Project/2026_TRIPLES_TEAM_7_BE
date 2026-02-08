@@ -5,6 +5,7 @@ on:
     branches: 
       - "main" # main 브랜치에 푸시하면 실행
       - "feat/#7"
+      
 
 jobs:
   deploy:
@@ -40,7 +41,6 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            mkdir -p /home/ubuntu/deploy # 폴더가 없으면 생성
             cd /home/ubuntu/deploy
             
             # 압축 파일로부터 이미지 로드
@@ -51,7 +51,11 @@ jobs:
             sudo docker rm node-app || true
             
             # 새 컨테이너 실행 (80포트로 접속하면 3000번 노드 서버로 연결)
-            sudo docker run -d --name node-app -p 80:3000 node-backend
+            sudo docker run -d --name node-app \
+              -p 80:3000 \
+              -v /home/ubuntu/deploy/.env:/app/.env \
+              -v /home/ubuntu/deploy/firebase-service-account.json:/app/firebase-service-account.json \
+              node-backend
             
             # 전송받은 압축 파일 삭제 (용량 확보)
             rm node-backend.tar.gz
