@@ -1,0 +1,64 @@
+name: Node.js SCP Deploy
+
+on:
+  push:
+    branches: 
+      - "main" # main 브랜치에 푸시하면 실행
+      - "feat/#7"
+      
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 1. Docker 이미지 빌드
+      - name: Build Docker image
+        run: docker build -t node-backend .
+
+      # 2. 이미지를 tar 파일로 압축 (용량을 줄이기 위해 gzip 사용)
+      - name: Save and compress image
+        run: docker save node-backend | gzip > node-backend.tar.gz
+
+      # 3. SCP를 이용해 EC2로 압축 파일 전송
+      - name: Copy image to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: "node-backend.tar.gz"
+          target: "/home/ubuntu/deploy" # EC2 내 저장 경로
+
+      # 4. EC2에서 이미지 로드 및 실행
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd /home/ubuntu/deploy
+            
+            # 압축 파일로부터 이미지 로드
+            sudo docker load < node-backend.tar.gz
+            
+            # 기존 컨테이너 중지 및 삭제
+            sudo docker stop node-app || true
+            sudo docker rm node-app || true
+            
+            # 새 컨테이너 실행 (80포트로 접속하면 3000번 노드 서버로 연결)
+            sudo docker run -d --name node-app \
+              -p 80:3000 \
+              -v /home/ubuntu/deploy/.env:/app/.env \
+              -v /home/ubuntu/deploy/firebase-service-account.json:/app/firebase-service-account.json \
+              node-backend
+            
+            # 전송받은 압축 파일 삭제 (용량 확보)
+            rm node-backend.tar.gz
+            
+            # 오래된 이미지들 정리
+            sudo docker image prune -f
