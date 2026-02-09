@@ -12,9 +12,9 @@ const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger'); // 너가 추가한 swagger.js
 
-const indexRouter = require('./routes/index');
-const matchRouter = require('./routes/match');
-const checklistRouter = require('./routes/checklist');
+const indexRouter = require('./src/routes/index');
+const matchRouter = require('./src/routes/match');
+const checklistRouter = require('./src/routes/checklist');
 
 // firebase가 개발 환경에서 없을 수도 있으니, 에러로 서버 죽지 않게
 try {
@@ -37,7 +37,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // routes
 app.use('/', indexRouter);
 app.use('/api', matchRouter);
-app.use('/api', checklistRouter);
+app.use('/api', checklistRouter); 
 
 // swagger
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
