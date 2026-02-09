@@ -28,7 +28,7 @@ var indexRouter = require('./src/routes/index');
 var authRouter = require('./src/routes/googleAuth');
 
 app.use('/', indexRouter);
-app.use('/auth', authRouter);
+app.use('/api/auth', authRouter);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
