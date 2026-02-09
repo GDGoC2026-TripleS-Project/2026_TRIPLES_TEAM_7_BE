@@ -6,6 +6,7 @@ var logger = require('morgan');
 var swaggerUi = require('swagger-ui-express');
 var swagger = require('./config/swaggerConfig');
 var dotenv =  require('dotenv');
+const cors = require('cors');
 
 dotenv.config();    // process.env 설정
 
@@ -15,6 +16,7 @@ const app = express();
 
 app.set('port', process.env.PORT || 3000);
 
+app.use(cors());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swagger.specs));
 app.use(logger('dev'));
 app.use(express.json());
