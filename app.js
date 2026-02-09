@@ -14,7 +14,7 @@ require('./config/firebaseConfig');
 
 const app = express();
 
-app.set('port', process.env.PORT || 3000);
+app.set('port', process.env.PORT || 8080);
 
 app.use(cors());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swagger.specs));
@@ -28,7 +28,7 @@ var indexRouter = require('./src/routes/index');
 var authRouter = require('./src/routes/googleAuth');
 
 app.use('/', indexRouter);
-app.use('/auth', authRouter);
+app.use('/api/auth', authRouter);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
