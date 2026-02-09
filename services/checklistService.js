@@ -1,219 +1,201 @@
-// services/matchService.js
-const { sequelize, job_cards, match_percent, match_result } = require('../models');
-const checklistService = require('./checklistService'); // ✅ 추가
+const db = require('../models');
+const { generateChecklists } = require('./geminiService'); 
 
-/**
- * ✅ 실제 AI 연동 시 여기만 교체하면 됨
- */
-async function callAIForMatch({ jobCard, resumeFileUrl }) {
+// 사용자의 모든 GAP 체크리스트 조회 (DB 기반)
+async function getAllGapChecklistsByUser(userId) {
+  const gapResults = await db.match_result.findAll({
+    where: { userId, cardStatus: 'GAP' },
+    order: [['matchId', 'DESC'], ['id', 'ASC']],
+  });
+
+  if (gapResults.length === 0) return [];
+
+  const matchResultIds = gapResults.map(r => r.id);
+  const matchIds = [...new Set(gapResults.map(r => r.matchId))];
+
+  const checklists = await db.improve_checklist.findAll({
+    where: { matchResultId: matchResultIds },
+    order: [['matchResultId', 'ASC'], ['id', 'ASC']],
+  });
+
+  const matches = await db.match_percent.findAll({
+    where: { id: matchIds },
+    attributes: ['id', 'createdAt'],
+    order: [['createdAt', 'DESC']],
+  });
+
+  const createdAtByMatchId = new Map(matches.map(m => [m.id, m.createdAt]));
+  const checklistByResultId = new Map();
+  for (const c of checklists) {
+    if (!checklistByResultId.has(c.matchResultId)) checklistByResultId.set(c.matchResultId, []);
+    checklistByResultId.get(c.matchResultId).push({
+      checklistId: c.id,
+      checkListText: c.checkListText,
+      isButtonActive: Boolean(c.isButtonActive),
+    });
+  }
+
+  const resultByMatchId = new Map();
+  for (const r of gapResults) {
+    if (!resultByMatchId.has(r.matchId)) {
+      resultByMatchId.set(r.matchId, {
+        matchId: r.matchId,
+        createdAt: createdAtByMatchId.get(r.matchId) ?? null,
+        gapResults: [],
+      });
+    }
+
+    resultByMatchId.get(r.matchId).gapResults.push({
+      matchResultId: r.id,
+      cardStatus: r.cardStatus,
+      comment: r.matchResultComment ?? r.matchResultTitle,
+      isRequired: Boolean(r.isRequired),
+      checklists: checklistByResultId.get(r.id) || [],
+    });
+  }
+
+  return Array.from(resultByMatchId.values()).sort((a, b) => {
+    const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return tb - ta;
+  });
+}
+
+// 특정 매치의 체크리스트 상세 조회 (DB 기반)
+async function getMatchChecklists(matchId) {
+  const match = await db.match_percent.findByPk(matchId);
+  if (!match) {
+    return { isSuccess: false, code: 'MATCH-404', message: 'match not found' };
+  }
+
+  const results = await db.match_result.findAll({
+    where: { matchId },
+    order: [['id', 'ASC']],
+  });
+
+  const gapResultIds = results.filter(r => r.cardStatus === 'GAP').map(r => r.id);
+  let checklists = [];
+  if (gapResultIds.length > 0) {
+    checklists = await db.improve_checklist.findAll({
+      where: { matchResultId: gapResultIds },
+      order: [['matchResultId', 'ASC'], ['id', 'ASC']],
+    });
+  }
+
+  const map = new Map();
+  for (const c of checklists) {
+    if (!map.has(c.matchResultId)) map.set(c.matchResultId, []);
+    map.get(c.matchResultId).push({
+      checklistId: c.id,
+      checkListText: c.checkListText,
+      isButtonActive: Boolean(c.isButtonActive),
+    });
+  }
+
+  const matchResults = results.map(r => {
+    const base = {
+      matchResultId: r.id,
+      cardStatus: r.cardStatus,
+      comment: r.matchResultComment ?? r.matchResultTitle,
+    };
+    if (r.cardStatus === 'GAP') {
+      return { ...base, isRequired: Boolean(r.isRequired), checklists: map.get(r.id) || [] };
+    }
+    return base;
+  });
+
   return {
-    matchPercent: 72,
-    strengthTop3: [
-      { comment: 'React실무 경험' },
-      { comment: '협업 기반 개발 경험' },
-      { comment: '포트폴리오 완성도 높음' },
-    ],
-    gapTop3: [
-      { comment: 'TypeScript 사용경험', isRequired: true },
-      { comment: '테스트 코드 작성 경험', isRequired: false },
-      { comment: '관련 자격증', isRequired: false },
-    ],
-    riskTop3: [
-      { comment: '조건 자체가 리스크' },
-      { comment: '경력 3년이상' },
-      { comment: '복수전공자 우대' },
-    ],
+    isSuccess: true,
+    code: 'SUCCESS-200',
+    message: 'OK',
+    data: { matchId, createdAt: match.createdAt, matchResults },
   };
 }
 
-/**
- * match_result 저장 rows 생성
- * - matchResultTitle은 NOT NULL이라 title 항상 채움
- */
-function buildMatchResultRows({ userId, matchId, fileUrl, ai }) {
-  const rows = [];
+// ✅ [중요] Gemini 연동 체크리스트 생성 함수
+async function generateChecklistsForMatch(matchId, { reset = false } = {}) {
+  try {
+    const gapResults = await db.match_result.findAll({
+      where: { matchId, cardStatus: 'GAP' },
+      order: [['id', 'ASC']],
+      limit: 3
+    });
 
-  const pushItems = (items, cardStatus) => {
-    (items || []).slice(0, 3).forEach((it, idx) => {
-      const comment = String(it.comment || '').trim();
-      const title = comment ? comment.slice(0, 100) : `${cardStatus} ${idx + 1}`;
+    if (gapResults.length === 0) return { isSuccess: true, message: 'no gap found' };
 
-      rows.push({
-        userId,
-        matchId,
-        fileUrl,
-        cardStatus, // STRENGTH | GAP | RISK
-        matchResultTitle: title,
-        matchResultComment: comment || null,
-        isRequired: cardStatus === 'GAP' ? Boolean(it.isRequired) : false,
+    // Gemini 호출용 데이터 준비
+    const aiInputs = gapResults.map(r => ({
+      id: r.id,
+      comment: r.matchResultComment ?? r.matchResultTitle
+    }));
+
+    // AI 서비스 호출 (GAP당 3개, 총 9개 생성)
+    const aiResponse = await generateChecklists(aiInputs);
+
+    if (reset) {
+      await db.improve_checklist.destroy({
+        where: { matchResultId: gapResults.map(r => r.id) }
+      });
+    }
+
+    const rowsToInsert = [];
+    aiResponse.results.forEach(item => {
+      item.tasks.forEach(taskText => {
+        rowsToInsert.push({
+          matchResultId: item.matchResultId,
+          checkListText: taskText,
+          isButtonActive: false
+        });
       });
     });
-  };
 
-  pushItems(ai.strengthTop3, 'STRENGTH');
-  pushItems(ai.gapTop3, 'GAP');
-  pushItems(ai.riskTop3, 'RISK');
-
-  return rows;
+    await db.improve_checklist.bulkCreate(rowsToInsert);
+    return { isSuccess: true, code: 'SUCCESS-201', data: { created: rowsToInsert.length } };
+  } catch (error) {
+    console.error("AI 체크리스트 생성 실패:", error);
+    throw error;
+  }
 }
 
-/**
- * DB에서 가져온 match_result를 응답용 Top3로 변환
- * ✅ (중복 정의 제거: 이 함수는 여기 1번만 두기)
- */
-function toTop3Response(matchResults) {
-  const strengthTop3 = [];
-  const gapTop3 = [];
-  const riskTop3 = [];
+// 체크리스트 토글 로직 (DB 기반)
+async function toggleChecklist(checklistId, userId) {
+  const checklist = await db.improve_checklist.findByPk(checklistId);
+  if (!checklist) return { isSuccess: false, code: 'CHECKLIST-404', message: 'Not found' };
 
-  for (const r of matchResults) {
-    const comment = r.matchResultComment ?? r.matchResultTitle;
-
-    if (r.cardStatus === 'STRENGTH') {
-      strengthTop3.push({ matchResultId: r.id, comment });
-    } else if (r.cardStatus === 'GAP') {
-      gapTop3.push({ matchResultId: r.id, comment, isRequired: Boolean(r.isRequired) });
-    } else if (r.cardStatus === 'RISK') {
-      riskTop3.push({ matchResultId: r.id, comment });
-    }
+  const mr = await db.match_result.findByPk(checklist.matchResultId);
+  if (!mr || Number(mr.userId) !== Number(userId)) {
+    return { isSuccess: false, code: 'AUTH-403', message: 'Forbidden' };
   }
 
-  return {
-    strengthTop3: strengthTop3.slice(0, 3),
-    gapTop3: gapTop3.slice(0, 3),
-    riskTop3: riskTop3.slice(0, 3),
-  };
+  const nextValue = !Boolean(checklist.isButtonActive);
+  await checklist.update({ isButtonActive: nextValue });
+
+  return { isSuccess: true, code: 'SUCCESS-200', data: { checklistId: checklist.id, isButtonActive: nextValue } };
 }
 
-async function createMatchAndSave({ userId, cardId, fileUrl }) {
-  // ✅ 1) match 저장/응답은 트랜잭션으로 묶고
-  // ✅ 2) 체크리스트(LLM 호출)는 트랜잭션 밖에서 실행하는 걸 추천 (DB lock 오래 잡는 것 방지)
-  const result = await sequelize.transaction(async (t) => {
-    // 1) 카드 존재 확인
-    const jobCard = await job_cards.findByPk(cardId, { transaction: t });
-    if (!jobCard) {
-      const err = new Error('Job card not found');
-      err.status = 404;
-      err.code = 'CARD-404';
-      throw err;
-    }
-
-    // 2) 소유자 검증
-    if (Number(jobCard.userId) !== Number(userId)) {
-      const err = new Error('Forbidden: card owner mismatch');
-      err.status = 403;
-      err.code = 'AUTH-403';
-      throw err;
-    }
-
-    // 3) AI 호출 (매치율/코멘트 생성)
-    const ai = await callAIForMatch({ jobCard, resumeFileUrl: fileUrl });
-
-    // 4) match_percent 저장
-    const mp = await match_percent.create(
-      { cardId, matchPercent: ai.matchPercent },
-      { transaction: t }
-    );
-
-    // 5) match_result 9개 저장
-    const rows = buildMatchResultRows({
-      userId,
-      matchId: mp.id,
-      fileUrl,
-      ai,
-    });
-
-    if (rows.length > 0) {
-      await match_result.bulkCreate(rows, { transaction: t });
-    }
-
-    // 6) 생성된 match_result 다시 조회 (id 필요)
-    const createdResults = await match_result.findAll({
-      where: { matchId: mp.id },
-      order: [['id', 'ASC']],
-      transaction: t,
-    });
-
-    const top3 = toTop3Response(createdResults);
-
-    // 7) canCreateChecklist (정책: GAP 중 isRequired true가 하나라도 있으면)
-    const canCreateChecklist = top3.gapTop3.some((g) => g.isRequired === true);
-
-    return {
-      matchId: mp.id,
-      matchPercent: mp.matchPercent,
-      createdAt: mp.createdAt,
-      sourceFileUrl: fileUrl,
-      ...top3,
-      canCreateChecklist,
-    };
+// 팝업 트리거 체크 (DB 기반)
+async function getResumePopupTrigger(matchId, userId) {
+  const gapResults = await db.match_result.findAll({
+    where: { matchId, userId, cardStatus: 'GAP' },
+    attributes: ['id']
   });
 
-  // ✅ 여기서 27개 체크리스트 생성 (match_result 9개 * 3개)
-  // 정책을 "필수 GAP가 있을 때만 생성"으로 할 거면 if 걸기
-  if (result.canCreateChecklist) {
-    await checklistService.generateChecklistsForMatch(result.matchId, { reset: true });
-  }
-  // 만약 "무조건 27개 생성"이면 위 if를 제거하고 항상 호출해.
+  if (gapResults.length === 0) return { matchId, shouldShowPopup: false };
 
-  return result;
-}
-
-async function getLatestMatch({ userId, cardId }) {
-  return await sequelize.transaction(async (t) => {
-    // 1) 카드 존재 확인
-    const jobCard = await job_cards.findByPk(cardId, { transaction: t });
-    if (!jobCard) {
-      const err = new Error('Job card not found');
-      err.status = 404;
-      err.code = 'CARD-404';
-      throw err;
-    }
-
-    // 2) 소유자 검증
-    if (Number(jobCard.userId) !== Number(userId)) {
-      const err = new Error('Forbidden: card owner mismatch');
-      err.status = 403;
-      err.code = 'AUTH-403';
-      throw err;
-    }
-
-    // 3) 최신 match_percent
-    const latest = await match_percent.findOne({
-      where: { cardId },
-      order: [['createdAt', 'DESC']],
-      transaction: t,
-    });
-
-    if (!latest) {
-      const err = new Error('Match not found');
-      err.status = 404;
-      err.code = 'MATCH-404';
-      throw err;
-    }
-
-    // 4) match_result
-    const results = await match_result.findAll({
-      where: { matchId: latest.id },
-      order: [['id', 'ASC']],
-      transaction: t,
-    });
-
-    const top3 = toTop3Response(results);
-    const canCreateChecklist = top3.gapTop3.some((g) => g.isRequired === true);
-
-    return {
-      matchId: latest.id,
-      matchPercent: latest.matchPercent,
-      createdAt: latest.createdAt,
-      sourceFileUrl: results[0]?.fileUrl ?? null,
-      ...top3,
-      canCreateChecklist,
-    };
+  const checklists = await db.improve_checklist.findAll({
+    where: { matchResultId: gapResults.map(r => r.id) },
+    attributes: ['isButtonActive']
   });
+
+  const total = checklists.length;
+  const completed = checklists.filter(c => Boolean(c.isButtonActive)).length;
+  return { matchId, totalChecklists: total, completedChecklists: completed, shouldShowPopup: total > 0 && completed === total };
 }
 
 module.exports = {
-  createMatchAndSave,
-  getLatestMatch,
+  getAllGapChecklistsByUser,
+  getMatchChecklists,
+  toggleChecklist,
+  getResumePopupTrigger,
+  generateChecklistsForMatch,
 };

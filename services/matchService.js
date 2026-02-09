@@ -1,5 +1,6 @@
 // services/matchService.js
 const { sequelize, job_cards, match_percent, match_result } = require('../models');
+const checklistService = require('./checklistService');
 
 /**
  * ✅ 실제 AI 연동 시 여기만 교체하면 됨
@@ -56,9 +57,7 @@ function buildMatchResultRows({ userId, matchId, fileUrl, ai }) {
   return rows;
 }
 
-/**
- * DB에서 가져온 match_result를 응답용 Top3로 변환
- */
+// (이미 있는 함수들: toTop3Response 등 재사용)
 function toTop3Response(matchResults) {
   const strengthTop3 = [];
   const gapTop3 = [];
@@ -83,8 +82,10 @@ function toTop3Response(matchResults) {
   };
 }
 
+
 async function createMatchAndSave({ userId, cardId, fileUrl }) {
-  return await sequelize.transaction(async (t) => {
+  const result = await sequelize.transaction(async (t) => {
+  
     // 1) 카드 존재 확인
     const jobCard = await job_cards.findByPk(cardId, { transaction: t });
     if (!jobCard) {
@@ -135,7 +136,7 @@ async function createMatchAndSave({ userId, cardId, fileUrl }) {
     // 7) canCreateChecklist
     const canCreateChecklist = top3.gapTop3.some((g) => g.isRequired === true);
 
-    // ✅ 최종 응답(네가 원한 형태)
+    // ✅ 최종 응답
     return {
       matchId: mp.id,
       matchPercent: mp.matchPercent,
@@ -145,34 +146,15 @@ async function createMatchAndSave({ userId, cardId, fileUrl }) {
       canCreateChecklist,
     };
   });
-}
 
-
-
-// (이미 있는 함수들: toTop3Response 등 재사용)
-function toTop3Response(matchResults) {
-  const strengthTop3 = [];
-  const gapTop3 = [];
-  const riskTop3 = [];
-
-  for (const r of matchResults) {
-    const comment = r.matchResultComment ?? r.matchResultTitle;
-
-    if (r.cardStatus === 'STRENGTH') {
-      strengthTop3.push({ matchResultId: r.id, comment });
-    } else if (r.cardStatus === 'GAP') {
-      gapTop3.push({ matchResultId: r.id, comment, isRequired: Boolean(r.isRequired) });
-    } else if (r.cardStatus === 'RISK') {
-      riskTop3.push({ matchResultId: r.id, comment });
-    }
+  // ✅ 트랜잭션 밖에서 체크리스트 생성(시중 AI 호출 포함)
+  if (result.canCreateChecklist) {
+    await checklistService.generateChecklistsForMatch(result.matchId, { reset: true });
   }
 
-  return {
-    strengthTop3: strengthTop3.slice(0, 3),
-    gapTop3: gapTop3.slice(0, 3),
-    riskTop3: riskTop3.slice(0, 3),
-  };
+  return result;
 }
+
 
 async function getLatestMatch({ userId, cardId }) {
   return await sequelize.transaction(async (t) => {
