@@ -27,14 +27,14 @@ const options = {
     ],
     servers: [
       {
-        url: "http://localhost:8080", // 요청 URL
+        url: "http://52.78.20.212", // 요청 URL
         description: '개발 서버',
       },
     ],
   },
   apis: [
-    path.join(__dirname, "../src/routes/*.js"),
-    path.join(__dirname, "../src/controllers/*.js")
+    path.join(__dirname, "./src/routes/*.js"),
+    path.join(__dirname, "./src/controllers/*.js")
   ],
 }
 const specs = swaggerJsdoc(options);

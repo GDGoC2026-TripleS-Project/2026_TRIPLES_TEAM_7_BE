@@ -23,7 +23,7 @@ module.exports = class match_percent extends Sequelize.Model {
       paranoid: true,
       createdAt: 'createdAt',
       updatedAt: false,
-      deletedAt: false,
+      deletedAt: 'deletedAt',
       modelName: 'match_percent',
       tableName: 'match_percent',
       charset: 'utf8mb4',
