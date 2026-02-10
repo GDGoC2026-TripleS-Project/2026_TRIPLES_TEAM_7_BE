@@ -1,10 +1,64 @@
 // routes/match.js
 const express = require('express');
 const router = express.Router();
-
 const matchService = require('../services/matchService');
 
-// POST /api/cards/:cardId/match  (AI 연동 + 저장)
+/**
+ * @swagger
+ * tags:
+ *   name: Match
+ *   description: 이력서-공고 매칭 API
+ */
+
+/**
+ * @swagger
+ * /api/cards/{cardId}/match:
+ *   post:
+ *     summary: AI 매칭 생성
+ *     description: 이력서 파일 URL을 기반으로 AI 매칭을 생성하고 결과를 저장합니다.
+ *     tags: [Match]
+ *     parameters:
+ *       - in: header
+ *         name: X-USER-ID
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         example: 1
+ *       - in: path
+ *         name: cardId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         example: 5
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fileUrl
+ *             properties:
+ *               fileUrl:
+ *                 type: string
+ *                 example: https://example.com/resume.pdf
+ *     responses:
+ *       200:
+ *         description: 매칭 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 matchId:
+ *                   type: integer
+ *                   example: 12
+ *                 matchPercent:
+ *                   type: integer
+ *                   example: 72
+ *       400:
+ *         description: 잘못된 요청
+ */
 router.post('/cards/:cardId/match', async (req, res, next) => {
   try {
     const userId = Number(req.header('X-USER-ID'));
@@ -22,16 +76,53 @@ router.post('/cards/:cardId/match', async (req, res, next) => {
     }
 
     const result = await matchService.createMatchAndSave({ userId, cardId, fileUrl });
-
-    // ✅ 응답은 최소 형태만
-    return res.status(200).json(result); // { matchId, matchPercent }
+    return res.status(200).json(result);
   } catch (err) {
     next(err);
   }
 });
 
-
-// ✅ 최신 매치 조회
+/**
+ * @swagger
+ * /api/cards/{cardId}/match:
+ *   get:
+ *     summary: 최신 매칭 조회
+ *     description: 특정 카드에 대한 사용자의 가장 최근 매칭 결과를 조회합니다.
+ *     tags: [Match]
+ *     parameters:
+ *       - in: header
+ *         name: X-USER-ID
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         example: 1
+ *       - in: path
+ *         name: cardId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         example: 5
+ *     responses:
+ *       200:
+ *         description: 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 matchId:
+ *                   type: integer
+ *                   example: 12
+ *                 matchPercent:
+ *                   type: integer
+ *                   example: 72
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                   example: 2026-02-09T10:20:50.000Z
+ *       400:
+ *         description: 잘못된 요청
+ */
 router.get('/cards/:cardId/match', async (req, res, next) => {
   try {
     const userId = Number(req.header('X-USER-ID'));

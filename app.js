@@ -10,7 +10,7 @@ const logger = require('morgan');
 const cors = require('cors');
 
 const swaggerUi = require('swagger-ui-express');
-const swaggerSpec = require('./swagger'); // 너가 추가한 swagger.js
+const specs = require('./swagger');
 
 const indexRouter = require('./src/routes/index');
 const matchRouter = require('./src/routes/match');
@@ -27,12 +27,18 @@ const app = express();
 
 app.set('port', process.env.PORT || 3000);
 
+console.log('[swagger] typeof specs:', typeof specs);
+console.log('[swagger] openapi:', specs && specs.openapi, 'keys:', specs && Object.keys(specs));
+
 app.use(cors());
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs'); // ejs 설치 필요
+
 
 // routes
 app.use('/', indexRouter);
@@ -40,7 +46,7 @@ app.use('/api', matchRouter);
 app.use('/api', checklistRouter); 
 
 // swagger
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // 404
 app.use((req, res, next) => next(createError(404)));
