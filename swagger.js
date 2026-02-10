@@ -1,4 +1,5 @@
-const swaggerJSDoc = require('swagger-jsdoc');
+const swaggerJsdoc = require('swagger-jsdoc');
+const path = require('path');
 
 const options = {
   definition: {
@@ -8,17 +9,10 @@ const options = {
       version: '1.0.0',
       description: 'Match Result & Improve Checklist API',
     },
-    servers: [
-      {
-        url: 'http://localhost:3000',
-      },
-    ],
-    tags: [
-      { name: 'Match', description: '매치 결과 API' },
-      { name: 'Checklist', description: '보완 체크리스트 API' },
-    ],
+    servers: [{ url: 'http://localhost:3000' }],
   },
-  apis: ['./routes/*.js'], // 라우터 주석 읽어옴
+  apis: [path.join(__dirname, './src/routes/*.js')],
 };
 
-module.exports = swaggerJSDoc(options);
+const specs = swaggerJsdoc(options);
+module.exports = specs;
