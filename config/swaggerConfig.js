@@ -27,7 +27,7 @@ const options = {
     ],
     servers: [
       {
-        url: "http://localhost:3000", // 요청 URL
+        url: "http://localhost:8080", // 요청 URL
         description: '개발 서버',
       },
     ],

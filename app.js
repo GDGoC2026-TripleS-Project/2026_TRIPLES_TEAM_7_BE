@@ -5,6 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var swaggerUi = require('swagger-ui-express');
 var swagger = require('./config/swaggerConfig');
+const { sequelize } = require('./src/models');
 var dotenv =  require('dotenv');
 
 dotenv.config();    // process.env 설정
@@ -12,8 +13,15 @@ dotenv.config();    // process.env 설정
 require('./config/firebaseConfig');
 
 const app = express();
+app.set('port', process.env.PORT || 8080);
 
-app.set('port', process.env.PORT || 3000);
+sequelize.sync({ force: false })
+  .then(() => {
+    console.log('데이터베이스 연결 성공');
+  })
+  .catch((err) => {
+    console.error(err);
+  });
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swagger.specs));
 app.use(logger('dev'));

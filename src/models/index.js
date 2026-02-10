@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize');
-const env = process.env.NODE_ENV || 'development';
-const config = require(__dirname + '/../config/config.json')[env];
+const env = 'development';
+const config = require( '../../config/config.js')[env];
 const fs = require('fs');
 const path = require('path');
 
@@ -11,21 +11,30 @@ const sequelize = new Sequelize(
 db.sequelize = sequelize;
 
 const basename = path.basename(__filename);   // index.js
-fs.readdirSync(__dirname)
-  .filter((file) => {   // index.js 제외
-    return file.indexOf('.') !== 0 && file !== basename && file.slice(-3) === '.js';
-  })
-  .forEach((file) => {
-    const model = require(path.join(__dirname, file));
-    console.log(file, model.name);
-    db[model.name] = model;
-    model.initiate(sequelize);   // initiate 호출
+function loadModelsFromDir(dir) {
+  fs.readdirSync(dir).forEach((file) => {
+    const fullPath = path.join(dir, file);
+    if (fs.statSync(fullPath).isDirectory()) {
+      // 하위 디렉토리면 재귀 호출
+      loadModelsFromDir(fullPath);
+    } else if (
+      file.indexOf('.') !== 0 &&
+      file !== basename &&
+      file.slice(-3) === '.js'
+    ) { 
+      const modelClass = require(fullPath);
+      console.log(file, modelClass.name);
+      const model = modelClass.init(sequelize);
+      db[modelClass.name] = model;
+    }
   });
+}
+
+loadModelsFromDir(__dirname);
 // associate는 initiate 이후에 호출해야 함
 Object.keys(db).forEach((modelName) => {
-
   if (db[modelName].associate) {
     db[modelName].associate(db);   // associate 호출
-  }
-});
+  }});
+
 module.exports = db;

@@ -26,7 +26,7 @@ module.exports = class job_cards extends Sequelize.Model {
         allowNull: false
       },
       deadlineAt: {
-        type: Sequelize.DATETIME,
+        type: Sequelize.DATE,
         allowNull: true,
       },
       jobTitle: { 
