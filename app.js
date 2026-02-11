@@ -27,13 +27,13 @@ try {
 const app = express();
 app.set('port', process.env.PORT || 8080);
 
-// sequelize.sync({ force: false })
-//   .then(() => {
-//     console.log('데이터베이스 연결 성공');
-//   })
-//   .catch((err) => {
-//     console.error(err);
-//   });
+sequelize.sync({ force: false })
+  .then(() => {
+    console.log('데이터베이스 연결 성공');
+  })
+  .catch((err) => {
+    console.error(err);
+  });
 
 console.log('[swagger] typeof specs:', typeof specs);
 console.log('[swagger] openapi:', specs && specs.openapi, 'keys:', specs && Object.keys(specs));
