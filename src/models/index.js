@@ -4,8 +4,6 @@ const config = require( '../../config/config.js')[env];
 const fs = require('fs');
 const path = require('path');
 
-const config = require(path.join(__dirname, '../../config/config.json'))[env];
-
 const db = {};
 const sequelize = new Sequelize(
   config.database, config.username, config.password, config,
@@ -13,6 +11,7 @@ const sequelize = new Sequelize(
 db.sequelize = sequelize;
 
 const basename = path.basename(__filename);   // index.js
+
 
 // 하위 폴더까지 .js 파일 전부 찾기
 function listJsFiles(dir) {
@@ -47,7 +46,6 @@ for (const filePath of modelFiles) {
   Model.init(sequelize);
 }
 
-// associate는 init 이후에 호출해야 함
 Object.keys(db).forEach((modelName) => {
   if (db[modelName].associate) {
     db[modelName].associate(db);   // associate 호출
