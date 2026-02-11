@@ -1,12 +1,6 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
-var swaggerUi = require('swagger-ui-express');
-var swagger = require('./config/swaggerConfig');
+const {swaggerUi, specs} = require('./config/swaggerConfig');
 const { sequelize } = require('./src/models');
-var dotenv =  require('dotenv');
+const dotenv =  require('dotenv');
 
 require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 console.log('[boot] USE_MOCK=', process.env.USE_MOCK);
@@ -18,10 +12,8 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const cors = require('cors');
 
-const swaggerUi = require('swagger-ui-express');
-const specs = require('./swagger');
-
 const indexRouter = require('./src/routes/index');
+const authRouter = require('./src/routes/googleAuth');
 const matchRouter = require('./src/routes/match');
 const checklistRouter = require('./src/routes/checklist');
 
@@ -35,13 +27,13 @@ try {
 const app = express();
 app.set('port', process.env.PORT || 8080);
 
-sequelize.sync({ force: false })
-  .then(() => {
-    console.log('데이터베이스 연결 성공');
-  })
-  .catch((err) => {
-    console.error(err);
-  });
+// sequelize.sync({ force: false })
+//   .then(() => {
+//     console.log('데이터베이스 연결 성공');
+//   })
+//   .catch((err) => {
+//     console.error(err);
+//   });
 
 console.log('[swagger] typeof specs:', typeof specs);
 console.log('[swagger] openapi:', specs && specs.openapi, 'keys:', specs && Object.keys(specs));
@@ -58,6 +50,7 @@ app.set('view engine', 'ejs'); // ejs 설치 필요
 
 // routes
 app.use('/', indexRouter);
+app.use('/api', authRouter);
 app.use('/api', matchRouter);
 app.use('/api', checklistRouter); 
 
