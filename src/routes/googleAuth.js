@@ -80,7 +80,7 @@ const router = express.Router();
  *                   type: string
  *                   example: "유효하지 않은 토큰입니다."
  */
-router.post('/googleLogin', verifyToken, login);
+router.post('/auth/googleLogin', verifyToken, login);
 
 /**
  * @swagger
@@ -118,7 +118,7 @@ router.post('/googleLogin', verifyToken, login);
  *                   type: string
  *                   example: "인증 토큰이 필요합니다."
  */
-router.post('/googleLogout', verifyToken, logout);
+router.post('/auth/googleLogout', verifyToken, logout);
 
 
 module.exports = router;

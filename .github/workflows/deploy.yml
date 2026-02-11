@@ -4,8 +4,6 @@ on:
   push:
     branches: 
       - "main" # main 브랜치에 푸시하면 실행
-      - "feat/#7"
-      
 
 jobs:
   deploy:
@@ -50,9 +48,9 @@ jobs:
             sudo docker stop node-app || true
             sudo docker rm node-app || true
             
-            # 새 컨테이너 실행 (80포트로 접속하면 3000번 노드 서버로 연결)
+            # 새 컨테이너 실행 (80포트로 접속하면 8080번 노드 서버로 연결)
             sudo docker run -d --name node-app \
-              -p 80:3000 \
+              -p 80:8080 \
               -v /home/ubuntu/deploy/.env:/app/.env \
               -v /home/ubuntu/deploy/firebase-service-account.json:/app/firebase-service-account.json \
               node-backend
