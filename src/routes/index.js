@@ -2,15 +2,14 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 
-var router = express.Router();
+const router = express.Router();
 
 router.use(cors());
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: true }));
 
-/* GET home page. */
-router.get('/', (req, res, next) => {
-  res.render('index', { title: 'Express' });
+router.get('/', (req, res) => {
+  res.status(200).json({ ok: true, message: 'server is running' });
 });
 
 module.exports = router;

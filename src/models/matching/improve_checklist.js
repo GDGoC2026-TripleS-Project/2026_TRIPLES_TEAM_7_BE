@@ -12,6 +12,12 @@ module.exports = class improve_checklist extends Sequelize.Model {
         type: Sequelize.STRING(255),
         allowNull: false,
       },
+      matchResultId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: { model: 'match_result', key: 'id' },
+        onDelete: 'CASCADE',
+      },
     }, {
       sequelize,
       timestamps: true,
@@ -19,7 +25,7 @@ module.exports = class improve_checklist extends Sequelize.Model {
       paranoid: true,
       createdAt: 'createdAt',
       updatedAt: false,      // updatedAt이 필요없다면 false
-      deletedAt: false, // paranoid true면 필요
+      deletedAt: 'deletedAt', // paranoid true면 필요
       modelName: 'improve_checklist',
       tableName: 'improve_checklist',
       charset: 'utf8mb4',
