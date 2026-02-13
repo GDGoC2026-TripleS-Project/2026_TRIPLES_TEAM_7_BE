@@ -43,18 +43,6 @@ const router = express.Router();
  *                 message:
  *                   type: string
  *                   example: "로그인 성공"
- *                 idToken:
- *                   type: string
- *                   description: firebase ID 토큰
- *                 user:          # 전송하고 싶은 유저 객체 추가
- *                    type: object
- *                    properties:
- *                      email:
- *                        type: string
- *                        description: "구글 이메일"
- *                      name:
- *                        type: string
- *                        description: "구글 계정 사용자 이름"
  *       400:
  *         description: 잘못된 요청
  *         content:
