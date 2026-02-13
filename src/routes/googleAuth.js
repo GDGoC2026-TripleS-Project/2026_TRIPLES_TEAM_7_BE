@@ -18,15 +18,17 @@ const router = express.Router();
  *     summary: 구글 로그인
  *     tags: [Auth]
  *     security:
- *       - bearerAuth: []
+ *       - Authorization: []
  *     requestHeaders:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - idToken
+ *             properties:
+ *               idToken:
+ *                 type: string
+ *                 description: firebase ID 토큰
  *     responses:
  *       200:
  *         description: 로그인 성공
@@ -89,7 +91,7 @@ router.post('/auth/googleLogin', verifyToken, login);
  *     summary: 구글 로그아웃
  *     tags: [Auth]
  *     security:
- *       - bearerAuth: []
+ *       - Authorization: []
  *     responses:
  *       200:
  *         description: 로그아웃 성공
