@@ -4,7 +4,8 @@ on:
   push:
     branches: 
       - "main" # main 브랜치에 푸시하면 실행
-      - "develop" # develop 브랜치에 푸시하면 실행
+      - "feat/#7"
+      
 
 jobs:
   deploy:
@@ -16,21 +17,11 @@ jobs:
 
       # 1. Docker 이미지 빌드
       - name: Build Docker image
-        run: |
-          if [ "${{ github.ref_name }}" == "main" ]; then
-            docker build -t node-backend-main .
-          else
-            docker build -t node-backend-dev .
-          fi
+        run: docker build -t node-backend .
 
       # 2. 이미지를 tar 파일로 압축 (용량을 줄이기 위해 gzip 사용)
       - name: Save and compress image
-        run: |
-          if [ "${{ github.ref_name }}" == "main" ]; then
-            docker save node-backend-main | gzip > node-backend.tar.gz
-          else
-            docker save node-backend-dev | gzip > node-backend.tar.gz
-          fi
+        run: docker save node-backend | gzip > node-backend.tar.gz
 
       # 3. SCP를 이용해 EC2로 압축 파일 전송
       - name: Copy image to EC2
@@ -59,28 +50,12 @@ jobs:
             sudo docker stop node-app || true
             sudo docker rm node-app || true
             
-            # 브랜치 변수 설정
-            BRANCH="${{ github.ref_name }}"
-            
-            if [ "$BRANCH" == "main" ]; then
-              # [Main 배포 시] dev는 멈추고 main 실행
-              sudo docker stop node-app-dev || true
-              sudo docker stop node-app-main || true
-              sudo docker rm node-app-main || true
-              sudo docker run -d --name node-app-main -p 80:8080 \
-                -v /home/ubuntu/deploy/.env:/app/.env \
-                -v /home/ubuntu/deploy/firebase-service-account.json:/app/firebase-service-account.json \
-                node-backend-main
-            else
-              # [Develop 배포 시] main은 멈추고 dev 실행
-              sudo docker stop node-app-main || true
-              sudo docker stop node-app-dev || true
-              sudo docker rm node-app-dev || true
-              sudo docker run -d --name node-app-dev -p 80:8080 \
-                -v /home/ubuntu/deploy/.env:/app/.env \
-                -v /home/ubuntu/deploy/firebase-service-account.json:/app/firebase-service-account.json \
-                node-backend-dev
-            fi
+            # 새 컨테이너 실행 (80포트로 접속하면 3000번 노드 서버로 연결)
+            sudo docker run -d --name node-app \
+              -p 80:3000 \
+              -v /home/ubuntu/deploy/.env:/app/.env \
+              -v /home/ubuntu/deploy/firebase-service-account.json:/app/firebase-service-account.json \
+              node-backend
             
             # 전송받은 압축 파일 삭제 (용량 확보)
             rm node-backend.tar.gz
