@@ -67,7 +67,7 @@ jobs:
               sudo docker stop node-app-dev || true
               sudo docker stop node-app-main || true
               sudo docker rm node-app-main || true
-              sudo docker run -d --name node-app-main -p 80:8081 \
+              sudo docker run -d --name node-app-main -p 80:8080 \
                 -v /home/ubuntu/deploy/.env:/app/.env \
                 -v /home/ubuntu/deploy/firebase-service-account.json:/app/firebase-service-account.json \
                 node-backend-main
@@ -76,7 +76,7 @@ jobs:
               sudo docker stop node-app-main || true
               sudo docker stop node-app-dev || true
               sudo docker rm node-app-dev || true
-              sudo docker run -d --name node-app-dev -p 80:8081 \
+              sudo docker run -d --name node-app-dev -p 80:8080 \
                 -v /home/ubuntu/deploy/.env:/app/.env \
                 -v /home/ubuntu/deploy/firebase-service-account.json:/app/firebase-service-account.json \
                 node-backend-dev
