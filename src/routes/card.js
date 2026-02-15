@@ -177,4 +177,50 @@ router.post('/ai/test-job', cardController.analyzeJobPosting);
  */
 router.post('/card/create', cardController.createCard);
 
+/**
+ * @swagger
+ * /api/card/delete/{cardId}:
+ *   delete:
+ *     summary: 채용공고 카드 삭제
+ *     description:
+ *       카드 ID를 기반으로 해당 카드를 완전 삭제합니다.
+ *       카드와 연결된 job_post 및 관련 데이터도 함께 삭제됩니다.
+ *     tags: [Cards]
+ *     parameters:
+ *       - in: header
+ *         name: X-USER-ID
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 사용자 ID
+ *         example: 1
+ *       - in: path
+ *         name: cardId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 삭제할 카드 ID
+ *         example: 15
+ *     responses:
+ *       200:
+ *         description: 카드 삭제 성공
+ *         content:
+ *           application/json:
+ *             example:
+ *               isSuccess: true
+ *               code: SUCCESS-200
+ *               message: 카드가 성공적으로 삭제되었습니다.
+ *               data:
+ *                 cardId: 15
+ *       400:
+ *         description: cardId 누락
+ *       401:
+ *         description: 사용자 인증 실패
+ *       403:
+ *         description: 삭제 권한 없음 또는 카드 없음
+ *       500:
+ *         description: 서버 내부 오류
+ */
+router.delete('/card/delete/:cardId', cardController.deleteCard);
+
 module.exports = router;

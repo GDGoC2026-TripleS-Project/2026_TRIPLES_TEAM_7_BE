@@ -11,3 +11,5 @@ const convertAndProcessLocation = async (address) => {
         coordinates: [parseFloat(coords.longitude), parseFloat(coords.latitude)]
     };
 };
+
+module.exports = convertAndProcessLocation;

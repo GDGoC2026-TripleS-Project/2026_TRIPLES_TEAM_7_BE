@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { job_cards, job_posts, canvas_items, sequelize } = require('../models');
+const convertAndProcessLocation = require('./mapService');
 
 exports.analyzeJob = async (url) => {
     console.log("분석 요청 URL:", url);
@@ -52,8 +53,11 @@ exports.createCard = async({userId, url}) => {
             return 'FULL_TIME';
         };
 
-        const lng = 0;
-        const lat = 0;
+        const location = await convertAndProcessLocation(aiData.locationText);
+        
+        if (!location) {
+        throw new Error('위치 변환 실패');
+        }
 
         // 4️⃣ job_cards 저장
         const card = await job_cards.create({
@@ -71,10 +75,7 @@ exports.createCard = async({userId, url}) => {
             locationText: aiData.locationText,
             experienceLevel: aiData.experienceLevel.join(', '),
             workDay: aiData.workDay,
-            addressPoint: {
-                type: 'Point',
-                coordinates: [lng, lat]
-            },
+            addressPoint: location,
             cardStatus: 'CANVAS',
         }, { transaction: t });
 
@@ -120,3 +121,30 @@ exports.detectJobSource = (url) => {
 
     return 'UNKNOWN';
 };
+
+exports.deleteCard = async({userId, cardId}) => {
+    return await sequelize.transaction(async (t) => {
+
+        const card = await job_cards.findOne({
+            where: { id: cardId, userId },
+            transaction: t
+        });
+
+        if (!card) {
+            throw new Error('삭제 권한이 없거나 카드가 존재하지 않습니다.');
+        }
+
+        const post = await job_posts.findByPk(card.jobPostId, {
+            transaction: t
+        });
+
+        if (post) {
+            await post.destroy({ force: true, transaction: t });
+        }
+
+        await card.destroy({ force: true, transaction: t });
+
+        return { message: '카드가 성공적으로 삭제되었습니다.', cardId: cardId };
+    });
+    
+}
