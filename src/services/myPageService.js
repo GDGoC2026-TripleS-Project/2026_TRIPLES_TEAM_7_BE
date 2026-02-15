@@ -36,8 +36,8 @@ const updateUserResume = async (userId, resumeUrl) => {
             throw new Error("이력서 URL이 유효하지 않습니다.");
         }
         
-        await User.update(
-            { resumeUrl: resumeUrl },
+        await resumes.update(
+            { fileUrl: resumeUrl },
             { where: { id: userId } }
         );
         return { resumeUrl };
