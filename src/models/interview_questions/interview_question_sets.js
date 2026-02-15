@@ -24,7 +24,7 @@ module.exports = class interview_question_sets extends Sequelize.Model {
       paranoid: true,
       createdAt: 'generatedAt',
       updatedAt: false,
-      deletedAt: false,
+      deletedAt: 'deletedAt',
       modelName: 'interview_question_sets',
       tableName: 'interview_question_sets',
       charset: 'utf8mb4',

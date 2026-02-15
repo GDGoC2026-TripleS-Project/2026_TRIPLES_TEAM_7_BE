@@ -16,6 +16,7 @@ const indexRouter = require('./src/routes/index');
 const authRouter = require('./src/routes/googleAuth');
 const matchRouter = require('./src/routes/match');
 const checklistRouter = require('./src/routes/checklist');
+const interviewRouter = require('./src/routes/interview');
 const cardRouter = require('./src/routes/card');
 
 
@@ -55,6 +56,7 @@ app.use('/', indexRouter);
 app.use('/api', authRouter);
 app.use('/api', matchRouter);
 app.use('/api', checklistRouter); 
+app.use('/api', interviewRouter);
 app.use('/api', cardRouter)
 
 
