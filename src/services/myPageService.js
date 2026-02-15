@@ -30,22 +30,23 @@ const updateUserAddress = async (userId, address) => {
  * @param {string} userId - 유저 고유 ID
  * @param {string} resumeUrl - PDF 파일이 저장된 URL 경로
  */
-const updateUserResume = async (userId, resumeUrl) => {
-    try {
-        if (!resumeUrl) {
-            throw new Error("이력서 URL이 유효하지 않습니다.");
-        }
+// const updateUserResume = async (userId, resumeUrl) => {
+//     try {
+//         if (!resumeUrl) {
+//             throw new Error("이력서 URL이 유효하지 않습니다.");
+//         }
         
-        await resumes.update(
-            { fileUrl: resumeUrl },
-            { where: { id: userId } }
-        );
-        return { resumeUrl };
-    } catch (error) {
-        console.error("이력서 URL 업데이트 중 오류 발생:", error.message);
-        throw error;
-    }
-};
+//         await resumes.update(
+//             { fileUrl: resumeUrl },
+//             { where: { id: userId } }
+//         );
+//         return { resumeUrl };
+//     } catch (error) {
+//         console.error("이력서 URL 업데이트 중 오류 발생:", error.message);
+//         throw error;
+//     }
+// };
 
 
-module.exports = { updateUserAddress, updateUserResume };
+// module.exports = { updateUserAddress, updateUserResume };
+module.exports = { updateUserAddress };
