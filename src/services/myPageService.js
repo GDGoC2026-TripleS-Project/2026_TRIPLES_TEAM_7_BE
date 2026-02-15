@@ -1,7 +1,7 @@
 const User = require('../models/users/user');
 const convertAndProcessLocation = require('./mapService');
 
-const setUserAddress = async (userId, address) => {
+const updateUserAddress = async (userId, address) => {
     try {
         // 3. DB 업데이트 실행
         const addressPoint = await convertAndProcessLocation(address);
@@ -25,4 +25,27 @@ const setUserAddress = async (userId, address) => {
     }
 };
 
-module.exports = { setUserAddress };
+/**
+ * 유저 이력서 URL 업데이트
+ * @param {string} userId - 유저 고유 ID
+ * @param {string} resumeUrl - PDF 파일이 저장된 URL 경로
+ */
+const updateUserResume = async (userId, resumeUrl) => {
+    try {
+        if (!resumeUrl) {
+            throw new Error("이력서 URL이 유효하지 않습니다.");
+        }
+        
+        await User.update(
+            { resumeUrl: resumeUrl },
+            { where: { id: userId } }
+        );
+        return { resumeUrl };
+    } catch (error) {
+        console.error("이력서 URL 업데이트 중 오류 발생:", error.message);
+        throw error;
+    }
+};
+
+
+module.exports = { updateUserAddress, updateUserResume };
