@@ -143,7 +143,7 @@ router.patch('/user/address', updateAddress);
  *                    type: string
  *                    example: "S3 업로드 중 서버 오류가 발생했습니다."
  */
-router.patch('/user/resume', updateResume);
+// router.patch('/user/resume', updateResume);
 
 /**
  * @swagger
