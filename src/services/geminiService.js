@@ -61,4 +61,43 @@ async function generateChecklists(gapItems) {
   }
 }
 
-module.exports = { generateChecklists };
+// ✅ 면접 질문 3개 생성 
+async function generateInterviewQuestions(interviewInputs) {
+  const model = genAI.getGenerativeModel({
+    model: "gemini-3-flash-preview",
+    generationConfig: { responseMimeType: "application/json" }
+  });
+
+  const prompt = `
+너는 백엔드 개발자 면접관이다. 아래 공고/스택 정보를 바탕으로 면접 질문 3개를 만든다.
+
+[반드시 지킬 규칙]
+- 항목은 정확히 3개
+- 한국어로만 작성
+- questionText: 질문 1문장 (20~60자 권장)
+- keywords: 키워드 정확히 2개 (각 2~8자 권장), 예: ["문제 해결","성장성"]
+- 키워드는 질문의 의도를 요약하는 단어/짧은 구
+- 금지: 번호/불릿/마크다운/코드블록/설명문
+- 출력은 JSON만
+
+[입력 데이터]
+${JSON.stringify(interviewInputs)}
+
+[출력 JSON - 이 구조만]
+{
+  "items": [
+    { "questionText": "question1", "keywords": ["k1","k2"] },
+    { "questionText": "question2", "keywords": ["k1","k2"] },
+    { "questionText": "question3", "keywords": ["k1","k2"] }
+  ]
+}
+
+JSON 외의 어떤 문자도 출력하지 마라.
+`;
+
+  const result = await model.generateContent(prompt);
+  const response = await result.response;
+  return JSON.parse(response.text());
+}
+
+module.exports = { generateChecklists, generateInterviewQuestions };

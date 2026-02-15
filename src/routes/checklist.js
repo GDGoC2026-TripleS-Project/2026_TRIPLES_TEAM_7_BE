@@ -48,6 +48,13 @@ const {
  *     tags: [Checklists]
  *     security:
  *       - UserIdHeader: []
+ *     parameters:
+ *       - in: header
+ *         name: X-USER-ID
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         example: 1
  *     responses:
  *       200:
  *         description: GAP 체크리스트 목록 반환
@@ -81,6 +88,12 @@ router.get('/checklists/all', async (req, res, next) => {
  *     description: 특정 매치(matchId)에 대한 체크리스트를 조회합니다.
  *     tags: [Checklists]
  *     parameters:
+ *       - in: header
+ *         name: X-USER-ID
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         example: 1
  *       - in: path
  *         name: matchId
  *         required: true
@@ -111,6 +124,12 @@ router.get('/matches/:matchId/checklists', async (req, res, next) => {
  *     security:
  *       - UserIdHeader: []
  *     parameters:
+ *       - in: header
+ *         name: X-USER-ID
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         example: 2
  *       - in: path
  *         name: checklistId
  *         required: true
@@ -145,6 +164,12 @@ router.patch('/checklists/:checklistId/toggle', async (req, res, next) => {
  *     security:
  *       - UserIdHeader: []
  *     parameters:
+ *       - in: header
+ *         name: X-USER-ID
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         example: 2
  *       - in: path
  *         name: matchId
  *         required: true
