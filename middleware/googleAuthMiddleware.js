@@ -17,6 +17,7 @@ const verifyToken = async (req, res, next) => {
   }
 
   try {
+    // jwt 토큰 검증
     const decodedToken = await admin.auth().verifyIdToken(token);
     req.user = decodedToken;
     next();
