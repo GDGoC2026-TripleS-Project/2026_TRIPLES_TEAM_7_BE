@@ -34,6 +34,16 @@ module.exports = class match_result extends Sequelize.Model {
         type: Sequelize.STRING(255),
         allowNull: true,
       },
+      matchResultTitle: { 
+        type: Sequelize.STRING(100), 
+        allowNull: false 
+      },
+      isRequired: {  //필수조건
+        type: Sequelize.BOOLEAN, 
+        allowNull: false, 
+        defaultValue: false 
+      },
+
     }, {
       sequelize,
       timestamps: false,
@@ -47,7 +57,7 @@ module.exports = class match_result extends Sequelize.Model {
   }
 
   static associate(db) {
-    db.match_result.hasMany(db.match_percent, { foreignKey: 'matchResultId', sourceKey: 'id' });
+    db.match_result.hasMany(db.improve_checklist, { foreignKey: 'matchResultId', sourceKey: 'id' });
 
     db.match_result.belongsTo (db.User, { foreignKey: 'userId', targetKey: 'id' });
     db.match_result.belongsTo (db.match_percent, { foreignKey: 'matchId', targetKey: 'id' });

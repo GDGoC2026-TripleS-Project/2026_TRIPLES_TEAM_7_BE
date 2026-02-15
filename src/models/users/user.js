@@ -17,7 +17,7 @@ module.exports = class User extends Sequelize.Model {
       },
       address: {
         type: Sequelize.STRING(255),
-        allowNull: false,
+        allowNull: true,
       },
       addressPoint: {
         type: Sequelize.GEOMETRY('POINT'),

@@ -30,14 +30,19 @@ const options = {
         url: "http://52.78.20.212", // 요청 URL
         description: '개발 서버',
       },
+      {
+        url: "http://localhost:8080", // 요청 URL
+        description: '로컬 개발 서버',
+      }
     ],
   },
   apis: [
     path.join(__dirname, "../src/routes/*.js"),
-    path.join(__dirname, "../src/controllers/*.js")
+    path.join(__dirname, "../src/controllers/*.js"),
+    path.join(__dirname, "../src/services/*.js")
   ],
 }
 const specs = swaggerJsdoc(options);
-// console.log(JSON.stringify(specs.paths, null, 2));
+console.log(JSON.stringify(specs, null, 2));
 
 module.exports = { swaggerUi, specs }

@@ -16,6 +16,12 @@ module.exports = class interview_questions extends Sequelize.Model {
         type: Sequelize.TEXT,
         allowNull: false,
       },
+      // ✅ 면접 질문 키워드 추가 
+      keywords: {
+        type: Sequelize.JSON,     
+        allowNull: false,
+        defaultValue: [],
+      },
       orderNo: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -27,7 +33,7 @@ module.exports = class interview_questions extends Sequelize.Model {
       paranoid: true,
       createdAt: 'createdAt',
       updatedAt: false,
-      deletedAt: false,
+      deletedAt: 'deletedAt',
       modelName: 'interview_questions',
       tableName: 'interview_questions',
       charset: 'utf8mb4',

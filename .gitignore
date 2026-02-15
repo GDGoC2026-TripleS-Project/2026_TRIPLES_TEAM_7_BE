@@ -38,3 +38,4 @@ uploads
 .env
 node_modules
 firebase-service-account.json
+config/config.json
