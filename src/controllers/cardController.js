@@ -32,15 +32,44 @@ exports.createCard = async (req, res) => {
       
     const result = await cardService.createCard({userId, url});
       
-    res.status(200).json({
-    isSuccess: true,
-    code: 'SUCCESS-200',
-    message: '카드를 성공적으로 생성했습니다.',
-    data: result,
-  });
+    return res.status(200).json({
+      isSuccess: true,
+      code: 'SUCCESS-200',
+      message: '카드를 성공적으로 생성했습니다.',
+      data: result,
+    });
 
   }catch(error){
     console.error(error);
-    res.status(500).json({ isSuccess: false, code: 'CARD-402', message: '카드 생성 중 문제가 발생하였습니다.' });
+    return res.status(400).json({ isSuccess: false, code: 'CARD-402', message: '카드 생성 중 문제가 발생하였습니다.' });
   }
+};
+
+exports.deleteCard = async(req, res) => {
+  try{
+    const userId = Number(req.header('X-USER-ID'));
+    if (!Number.isInteger(userId)) {
+      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'X-USER-ID required' });
+    }
+    
+    const cardId = Number(req.params.cardId);
+
+    if (!cardId) {
+      return res.status(400).json({ isSuccess: false, code: 'CARD-403', message: 'cardId는 필수입니다.' });
+    }
+
+    const result = await cardService.deleteCard({userId, cardId});
+
+    return res.status(200).json({
+      isSuccess: true,
+      code: 'SUCCESS-200',
+      message: result.message,
+      data: result.data
+    });
+  }catch(error){
+    console.error(error);
+    return res.status(400).json({ isSuccess: false, code: 'CARD-404', message: '카드 삭제 중 문제가 발생하였습니다.' });
+  }
+  
+
 };
