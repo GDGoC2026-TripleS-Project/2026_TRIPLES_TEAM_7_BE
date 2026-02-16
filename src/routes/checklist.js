@@ -38,6 +38,7 @@ const {
   toggleChecklist,
   getResumePopupTrigger,
 } = require('../services/checklistService');
+const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
 
 /**
  * @swagger
@@ -69,7 +70,7 @@ const {
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/checklists/all', async (req, res, next) => {
+router.get('/checklists/all', authenticateJWTtoken, async (req, res, next) => {
   try {
     const userId = Number(req.header('X-USER-ID'));
     if (!Number.isInteger(userId)) {
@@ -106,7 +107,7 @@ router.get('/checklists/all', async (req, res, next) => {
  *       400:
  *         description: 잘못된 matchId
  */
-router.get('/matches/:matchId/checklists', async (req, res, next) => {
+router.get('/matches/:matchId/checklists', authenticateJWTtoken, async (req, res, next) => {
   try {
     const matchId = Number(req.params.matchId);
     const result = await getMatchChecklists(matchId);
@@ -142,7 +143,7 @@ router.get('/matches/:matchId/checklists', async (req, res, next) => {
  *       401:
  *         description: 인증 실패
  */
-router.patch('/checklists/:checklistId/toggle', async (req, res, next) => {
+router.patch('/checklists/:checklistId/toggle', authenticateJWTtoken, async (req, res, next) => {
   try {
     const userId = Number(req.header('X-USER-ID'));
     if (!Number.isInteger(userId)) {
@@ -182,7 +183,7 @@ router.patch('/checklists/:checklistId/toggle', async (req, res, next) => {
  *       401:
  *         description: 인증 실패
  */
-router.get('/matches/:matchId/resume-popup-trigger', async (req, res, next) => {
+router.get('/matches/:matchId/resume-popup-trigger', authenticateJWTtoken, async (req, res, next) => {
   try {
     const userId = Number(req.header('X-USER-ID'));
     if (!Number.isInteger(userId)) {

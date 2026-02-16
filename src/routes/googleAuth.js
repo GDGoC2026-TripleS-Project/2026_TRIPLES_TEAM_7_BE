@@ -2,6 +2,7 @@ const express = require('express');
 const { login, logout, refreshToken } = require('../controllers/googleAuthController');
 const verifyToken = require('../../middleware/googleAuthMiddleware.js');
 const swaggerJsDoc = require('swagger-jsdoc');
+const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
 
 const router = express.Router();
 /**
@@ -112,7 +113,7 @@ router.post('/auth/googleLogin', verifyToken, login);
  *                   type: string
  *                   example: "인증 토큰이 필요합니다."
  */
-router.post('/auth/googleLogout', verifyToken, logout);
+router.post('/auth/googleLogout', authenticateJWTtoken, logout);
 
 
 /**

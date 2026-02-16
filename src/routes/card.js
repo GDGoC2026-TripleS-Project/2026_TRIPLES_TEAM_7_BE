@@ -1,3 +1,5 @@
+const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
+
 /**
  * @swagger
  * tags:
@@ -175,7 +177,7 @@ router.post('/ai/test-job', cardController.analyzeJobPosting);
  *                 code: CARD-402
  *                 message: 카드 생성 중 문제가 발생하였습니다.
  */
-router.post('/card/create', cardController.createCard);
+router.post('/card/create', authenticateJWTtoken, cardController.createCard);
 
 /**
  * @swagger
@@ -221,6 +223,6 @@ router.post('/card/create', cardController.createCard);
  *       500:
  *         description: 서버 내부 오류
  */
-router.delete('/card/delete/:cardId', cardController.deleteCard);
+router.delete('/card/delete/:cardId', authenticateJWTtoken, cardController.deleteCard);
 
 module.exports = router;

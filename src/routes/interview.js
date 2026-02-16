@@ -59,6 +59,7 @@
 
 const express = require('express');
 const router = express.Router();
+const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
 
 const {
   setAllCardsToInterview,
@@ -112,7 +113,7 @@ function requireIntParam(req, res, name) {
  *       401:
  *         description: 사용자 헤더 누락
  */
-router.post('/interview/cards/status', async (req, res, next) => {
+router.post('/interview/cards/status', authenticateJWTtoken, async (req, res, next) => {
   try {
     const userId = requireUserId(req, res);
     if (userId == null) return;
@@ -157,7 +158,7 @@ router.post('/interview/cards/status', async (req, res, next) => {
  *       502:
  *         description: AI 생성 실패
  */
-router.post('/cards/:cardId/interview/questions', async (req, res, next) => {
+router.post('/cards/:cardId/interview/questions', authenticateJWTtoken, async (req, res, next) => {
   try {
     const userId = requireUserId(req, res);
     if (userId == null) return;
@@ -202,7 +203,7 @@ router.post('/cards/:cardId/interview/questions', async (req, res, next) => {
  *       403:
  *         description: 카드 소유권 없음
  */
-router.get('/cards/:cardId/interview/questions', async (req, res, next) => {
+router.get('/cards/:cardId/interview/questions', authenticateJWTtoken, async (req, res, next) => {
   try {
     const userId = requireUserId(req, res);
     if (userId == null) return;

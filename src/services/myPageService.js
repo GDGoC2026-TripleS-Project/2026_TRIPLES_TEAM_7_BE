@@ -50,4 +50,3 @@ const updateUserResume = async (userId, resumeUrl) => {
 
 
 module.exports = { updateUserAddress, updateUserResume };
-// module.exports = { updateUserAddress };

@@ -23,9 +23,8 @@ services:
       - db
     ports:
       - "80:8080"
-    env_file:
-      - .env # .env 파일에서 변수를 읽어오므로 깔끔합니다.
     volumes:
+      - ./deploy/.env:/app/.env # EC2의 deploy 폴더에 .env 파일이 있다고 가정
       - ./firebase-service-account.json:/app/firebase-service-account.json
 
 volumes:
