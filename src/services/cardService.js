@@ -56,7 +56,7 @@ exports.createCard = async({userId, url}) => {
         const location = await convertAndProcessLocation(aiData.locationText);
         
         if (!location) {
-        throw new Error('위치 변환 실패');
+            throw new Error('위치 변환 실패');
         }
 
         // 4️⃣ job_cards 저장
@@ -148,3 +148,42 @@ exports.deleteCard = async({userId, cardId}) => {
     });
     
 }
+
+exports.getCard = async ({ userId, cardId }) => {
+    const card = await job_cards.findOne({
+        where: { id: cardId, userId }
+    });
+
+    if (!card) {
+    const error = new Error('카드가 존재하지 않습니다.');
+    error.status = 404;
+    error.code = 'CARD-404';
+    throw error;
+}
+
+    return {
+        id: card.id,
+        userId: card.userId,
+        jobPostId: card.jobPostId,
+        fileUrl: card.fileUrl,
+        deadlineAt: card.deadlineAt,
+        jobTitle: card.jobTitle,
+        companyName: card.companyName,
+        employmentType: card.employmentType,
+        roleText: card.roleText,
+        necessaryStack: card.necessaryStack ?? [],
+        preferStack: card.preferStack ?? [],
+        salaryText: card.salaryText,
+        locationText: card.locationText,
+        experienceLevel: card.experienceLevel,
+        workDay: card.workDay,
+        addressPoint: card.addressPoint
+            ? {
+                type: card.addressPoint.type,
+                coordinates: card.addressPoint.coordinates
+            }
+            : null,
+        cardStatus: card.cardStatus,
+        createdAt: card.createdAt
+    };
+};

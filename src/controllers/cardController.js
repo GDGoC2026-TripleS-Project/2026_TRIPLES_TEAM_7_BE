@@ -73,3 +73,36 @@ exports.deleteCard = async(req, res) => {
   
 
 };
+
+exports.getCard = async(req, res) => {
+  try{
+    const userId = Number(req.header('X-USER-ID'));
+    if (!Number.isInteger(userId)) {
+      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'X-USER-ID required' });
+    }
+    
+    const cardId = Number(req.params.cardId);
+
+    if (!cardId) {
+      return res.status(400).json({ isSuccess: false, code: 'CARD-403', message: 'cardId는 필수입니다.' });
+    }
+
+    const result = await cardService.getCard({userId, cardId});
+
+    return res.status(200).json({
+      isSuccess: true,
+      code: 'SUCCESS-200',
+      message: "정상적으로 카드 세부정보를 반환했습니다.",
+      data: result
+    });
+
+
+  }catch(error){
+    return res.status(error.status || 500).json({
+        isSuccess: false,
+        code: error.code || 'SERVER-500',
+        message: error.message || '카드 세부 정보를 가져오는 중에 에러가 발생했습니다.'
+    });
+  }
+
+}
