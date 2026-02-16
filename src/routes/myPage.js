@@ -70,7 +70,7 @@ router.patch('/user/address', updateAddress);
 /**
  * @swagger
  * /api/user/resume:
- *    patch:
+ *   patch:
  *      summary: 유저 이력서(PDF) 업로드 및 수정
  *      tags: [User]
  *      security:
@@ -78,14 +78,14 @@ router.patch('/user/address', updateAddress);
  *      requestBody:
  *          required: true
  *          content:
- *            Multipart/form-data:
+ *            multipart/form-data:
  *              schema:
  *                type: object
  *                properties:
- *                 resume:
- *                   type: string
- *                   format: binary
- *                   description: 업로드할 PDF 이력서 파일
+ *                  resume:
+ *                    type: string
+ *                    format: binary
+ *                    description: 업로드할 PDF 이력서 파일
  *      responses:
  *        200:
  *          description: 이력서 업로드 및 DB 업데이트 성공
@@ -143,7 +143,7 @@ router.patch('/user/address', updateAddress);
  *                    type: string
  *                    example: "S3 업로드 중 서버 오류가 발생했습니다."
  */
-// router.patch('/user/resume', updateResume);
+router.patch('/user/resume', upload.single('resume'), updateResume);
 
 /**
  * @swagger
@@ -176,7 +176,7 @@ router.patch('/user/address', updateAddress);
  *        404:
  *          description: 유저를 찾을 수 없음
  */
-router.get('/user/info', userInfo);
+router.get('/users/me', userInfo);
 
 
 module.exports = router;
