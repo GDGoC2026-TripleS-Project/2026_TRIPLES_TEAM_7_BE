@@ -11,8 +11,8 @@ module.exports = {
     test: {
         username: 'root',
         password: process.env.SEQUELIZE_PASSWORD,
-        database: 'database_test',
-        host: process.env.DB_HOST,
+        database: process.env.DB_NAME || 'database_test',
+        host: process.env.DB_HOST || '127.0.0.1',
         dialect: 'mysql',
     },
     production: {
