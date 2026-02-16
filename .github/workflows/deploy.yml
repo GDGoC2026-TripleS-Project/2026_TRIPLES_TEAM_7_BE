@@ -29,7 +29,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
-          source: "node-backend.tar.gz, docker-compose.yml" # 전송할 파일들
+          source: "node-backend.tar.gz, docker-compose.yml, Dockerfile" # 전송할 파일들
           target: "/home/ubuntu/deploy" # EC2 내 저장 경로
 
       # 4. EC2에서 이미지 로드 및 실행
