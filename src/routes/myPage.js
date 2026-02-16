@@ -65,7 +65,7 @@ const router = express.Router();
  *                   type: string
  *                   example: "유효하지 않은 토큰입니다."
  */
-router.patch('/user/address', updateAddress);
+router.patch('/user/address', authenticateJWTtoken, updateAddress);
 
 /**
  * @swagger
@@ -143,7 +143,7 @@ router.patch('/user/address', updateAddress);
  *                    type: string
  *                    example: "S3 업로드 중 서버 오류가 발생했습니다."
  */
-router.patch('/user/resume', upload.single('resume'), updateResume);
+router.patch('/user/resume', authenticateJWTtoken, upload.single('resume'), updateResume);
 
 /**
  * @swagger
@@ -176,7 +176,7 @@ router.patch('/user/resume', upload.single('resume'), updateResume);
  *        404:
  *          description: 유저를 찾을 수 없음
  */
-router.get('/users/me', userInfo);
+router.get('/users/me', authenticateJWTtoken, userInfo);
 
 
 module.exports = router;

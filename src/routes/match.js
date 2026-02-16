@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const matchService = require('../services/matchService');
+const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
 
 /**
  * @swagger
@@ -59,7 +60,7 @@ const matchService = require('../services/matchService');
  *       400:
  *         description: 잘못된 요청
  */
-router.post('/cards/:cardId/match', async (req, res, next) => {
+router.post('/cards/:cardId/match', authenticateJWTtoken, async (req, res, next) => {
   try {
     const userId = Number(req.header('X-USER-ID'));
     const cardId = Number(req.params.cardId);
