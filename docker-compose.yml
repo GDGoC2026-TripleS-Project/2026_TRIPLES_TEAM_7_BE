@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    environment:
+      # 주의: 콜론(:) 뒤에 반드시 한 칸을 띄워야 합니다!
+      MYSQL_DATABASE: database_test
+      MYSQL_ROOT_PASSWORD: process.env.DB_PASSWORD
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  node-app:
+    build: .
+    image: node-backend
+    container_name: node-app
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "80:8080"
+    env_file:
+      - .env # .env 파일에서 변수를 읽어오므로 깔끔합니다.
+    volumes:
+      - ./firebase-service-account.json:/app/firebase-service-account.json
+
+volumes:
+  mysql_data:
