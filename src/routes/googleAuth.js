@@ -1,5 +1,5 @@
 const express = require('express');
-const { login, logout } = require('../controllers/googleAuthController');
+const { login, logout, refreshToken } = require('../controllers/googleAuthController');
 const verifyToken = require('../../middleware/googleAuthMiddleware.js');
 const swaggerJsDoc = require('swagger-jsdoc');
 
@@ -43,6 +43,10 @@ const router = express.Router();
  *                 message:
  *                   type: string
  *                   example: "로그인 성공"
+ *                 refreshToken:
+ *                   type: string
+ *                   description: 유효한 JWT 리프레시 토큰
+ *                   example: "eyJhbGciOiJIUzI1..."
  *       400:
  *         description: 잘못된 요청
  *         content:
@@ -109,6 +113,63 @@ router.post('/auth/googleLogin', verifyToken, login);
  *                   example: "인증 토큰이 필요합니다."
  */
 router.post('/auth/googleLogout', verifyToken, logout);
+
+
+/**
+ * @swagger
+ * /api/auth/refresh:
+ *   post:
+ *      summary: 액세스 토큰 및 리프레시 토큰 갱신
+ *      description: |
+ *          만료된 Access Token을 갱신하기 위해 유효한 Refresh Token을 전송합니다.
+ *          성공 시 새로운 Access Token은 Response Header에, 
+ *          새로운 Refresh Token은 Response Body에 담겨 반환됩니다. (Refresh Token Rotation)
+ *      tags: [Auth]
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      required:
+ *                        - refreshToken
+ *                      properties:
+ *                        refreshToken:
+ *                          type: string
+ *                          description: 유효한 JWT 리프레시 토큰
+ *                          example: "eyJhbGciOiJIUzI1..."
+ *      responses:
+ *        200:
+ *          description: 토큰 갱신 성공
+ *          headers:
+ *              Authorization:
+ *                  description: "새로 발급된 Access Token (Bearer 스키마)"
+ *          schema:
+ *              type: string
+ *              example: "Bearer eyJhbGciOiJIUzI1..."
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                        success:
+ *                          type: boolean
+ *                          example: true
+ *                        message:
+ *                          type: string
+ *                          example: "Token refreshed successfully"
+ *                        refreshToken:
+ *                          type: string
+ *                          description: "새로 발급된 Refresh Token"
+ *                          example: "eyJhbGciOiJIUzI1..."
+ *        401:
+ *          description: Refresh Token이 누락됨
+ *        403:
+ *          description: Refresh Token이 만료되었거나 유효하지 않음
+ *        500:
+ *          description: 서버 내부 오류
+ */
+router.post('/auth/verifyToken', refreshToken);
 
 
 module.exports = router;
