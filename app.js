@@ -1,9 +1,8 @@
 const {swaggerUi, specs} = require('./config/swaggerConfig');
 const { sequelize } = require('./src/models');
-const dotenv =  require('dotenv');
-
-require('dotenv').config({ path: require('path').join(__dirname, '.env') });
+const dotenv = require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 console.log('[boot] USE_MOCK=', process.env.USE_MOCK);
+console.log('[boot] DB_HOST=', process.env.DB_HOST);
 
 const createError = require('http-errors');
 const express = require('express');
