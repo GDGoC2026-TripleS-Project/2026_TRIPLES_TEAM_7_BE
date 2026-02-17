@@ -51,7 +51,30 @@ exports.userInfo = async (req, res, next) => {
 
         const result = User.findByPk(userId, {
             // 요청하신 3가지 정보만 선택하여 리턴
-            attributes: ['username', 'email', 'address']
+            attributes: ['address', 'resumeUrl']
+        });
+        
+        if (!result) {
+            return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
+        }
+        
+        return res.status(200).json({
+            success: true,
+            message: "사용자 정보 조회 성공",
+            data: result
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.userAccount = async (req, res, next) => {
+    try {
+        const userId = Number(req.header('X-USER-ID'));
+
+        const result = User.findByPk(userId, {
+            // 요청하신 3가지 정보만 선택하여 리턴
+            attributes: ['address', 'resumeUrl']
         });
         
         if (!result) {
