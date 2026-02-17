@@ -44,24 +44,12 @@ jobs:
             
             # 압축 파일로부터 이미지 로드
             sudo docker load < node-backend.tar.gz
-            
-            # 기존 컨테이너 중지 및 삭제
-            sudo docker stop node-app || true
-            sudo docker rm node-app || true
+ 
+            # 기존 컨테이너 내리기
+            sudo docker-compose down
 
-            
-            # 새 컨테이너 실행 (80포트로 접속하면 8080번 노드 서버로 연결)
-            sudo docker run -d --name node-app \
-              -p 80:8080 \
-              -v /home/ubuntu/deploy/.env:/app/.env \
-              -v /home/ubuntu/deploy/firebase-service-account.json:/app/firebase-service-account.json \
-              node-backend
+            # 새로 실행
+            sudo docker-compose up -d --build
 
-              
-            sudo docker-compose up -d --force-recreate
-            
-            # 전송받은 압축 파일 삭제 (용량 확보)
             rm node-backend.tar.gz
-            
-            # 오래된 이미지들 정리
             sudo docker image prune -f
