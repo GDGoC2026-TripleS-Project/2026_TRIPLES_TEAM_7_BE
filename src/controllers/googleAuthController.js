@@ -38,8 +38,20 @@ exports.login = async (req, res, next) => {
 };
 
 exports.logout = (req, res) => {
-  // 클라이언트 측에서 토큰을 삭제하도록 안내
-  res.status(200).json({ success: true, message: 'Logged out successfully' });
+    try {
+        // 서버 측에서는 refreshToken을 관리하는 저장소(DB, Redis 등)에서 제거하거나 블랙리스트 처리 // 예: DB에 저장된 refreshToken을 삭제 
+        // 클라이언트 측에서는 accessToken/refreshToken을 삭제하도록 안내
+        res.status(200).json({
+            success: true,
+            message: 'AccessToken과 refreshToken을 클라이언트 내에서 삭제해 주세요.'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Logout failed',
+            error: error.message
+        });
+    }
 };
 
 exports.refreshToken = async (req, res) => {
