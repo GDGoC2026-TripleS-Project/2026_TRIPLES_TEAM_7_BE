@@ -9,4 +9,4 @@ RUN npm install
 
 EXPOSE 8080
 
-CMD ["npm", "start"]
+CMD ["./wait-for-it.sh", "db:3306", "--", "npm", "start"]
