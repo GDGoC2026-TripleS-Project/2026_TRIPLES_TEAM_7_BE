@@ -1,5 +1,5 @@
 const express = require('express');
-const { login, logout, refreshToken } = require('../controllers/googleAuthController');
+const { login, logout, refreshToken, deleteUser } = require('../controllers/googleAuthController');
 const verifyToken = require('../../middleware/googleAuthMiddleware.js');
 const swaggerJsDoc = require('swagger-jsdoc');
 const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
@@ -172,5 +172,34 @@ router.post('/auth/googleLogout', authenticateJWTtoken, logout);
  */
 router.post('/auth/verifyToken', refreshToken);
 
+/**
+ * @swagger
+ * /api/auth/delete:
+ *    delete:
+ *      summary: 회원 탈퇴
+ *      tags: [Auth]
+ *      security:
+ *        - Authorization: []
+ *      description: 현재 로그인한 사용자의 계정을 삭제(탈퇴)합니다.
+ *      responses:
+ *        200:
+ *          description: 회원 탈퇴 성공
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  success:
+ *                    type: boolean
+ *                    example: true
+ *                  message:
+ *                    type: string
+ *                    example: "User account deleted successfully"
+ *        401:
+ *          description: 인증되지 않은 사용자
+ *        404:
+ *          description: 유저를 찾을 수 없음
+ */
+router.delete('/auth/delete', authenticateJWTtoken, deleteUser);
 
 module.exports = router;
