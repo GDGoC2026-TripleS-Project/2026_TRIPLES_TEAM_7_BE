@@ -26,7 +26,7 @@ services:
     ports:
       - "80:8080"
     volumes:
-      - ./deploy/.env:/app/.env # EC2의 deploy 폴더에 .env 파일이 있다고 가정
+      - ./.env:/app/.env # EC2의 deploy 폴더에 .env 파일이 있다고 가정
       - ./firebase-service-account.json:/app/firebase-service-account.json
 
 volumes:

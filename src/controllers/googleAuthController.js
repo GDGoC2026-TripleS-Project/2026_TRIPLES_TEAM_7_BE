@@ -38,8 +38,18 @@ exports.login = async (req, res, next) => {
 };
 
 exports.logout = (req, res) => {
-  // 클라이언트 측에서 토큰을 삭제하도록 안내
-  res.status(200).json({ success: true, message: 'Logged out successfully' });
+    try {
+        res.status(200).json({
+            success: true,
+            message: '로그아웃되었습니다.'
+        });
+    } catch (error) {
+        res.status(401).json({
+            success: false,
+            message: '인증 토큰이 필요합니다.',
+            error: error.message
+        });
+    }
 };
 
 exports.refreshToken = async (req, res) => {
@@ -82,5 +92,43 @@ exports.refreshToken = async (req, res) => {
             return res.status(403).json({ success: false, message: 'Refresh Token이 만료되었습니다. 다시 로그인하세요.' });
         }
         return res.status(403).json({ success: false, message: '유효하지 않은 Refresh Token입니다.' });
+    }
+};
+
+exports.deleteUser = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const user = await User.findByIdAndUpdate(
+            userId,
+            { deletedAt: new Date() }, { new: true }
+        );
+        
+        if (!user) {
+            return res.status(404).json({
+                success: false, message: '유저를 찾을 수 없습니다.'
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            message: '회원 탈퇴가 완료되었습니다.'
+        });
+    } catch (error) {
+        res.status(401).json({
+            success: false,
+            message: '인증되지 않은 사용자입니다.',
+            error: error.message
+        });
+        res.status(403).json({
+            success: false,
+            message: '유저를 찾을 수 없습니다.',
+            error: error.message
+        });
+        res.status(500).json({
+            success: false,
+            message: '회원 탈퇴 처리 중 오류가 발생했습니다.',
+            error: error.message
+        });
     }
 };
