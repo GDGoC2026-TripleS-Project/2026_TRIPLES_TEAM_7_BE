@@ -174,6 +174,23 @@ router.post('/auth/verifyToken', refreshToken);
 
 /**
  * @swagger
+ * /api/auth/logout:
+ *    post:
+ *      summary: 로그아웃
+ *      tags: [Auth]
+ *      security:
+ *        - Authorization: []
+ *      description: 현재 로그인한 사용자의 세션을 종료하고 로그아웃합니다.
+ *      responses:
+ *        200:
+ *          description: 로그아웃 성공
+ *        401:
+ *          description: 인증되지 않은 사용자
+ */
+router.post('/auth/logout', googleLogout);
+
+/**
+ * @swagger
  * /api/auth/delete:
  *    delete:
  *      summary: 회원 탈퇴
@@ -201,5 +218,6 @@ router.post('/auth/verifyToken', refreshToken);
  *          description: 유저를 찾을 수 없음
  */
 router.delete('/auth/delete', authenticateJWTtoken, deleteUser);
+
 
 module.exports = router;
