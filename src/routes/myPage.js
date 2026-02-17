@@ -1,6 +1,6 @@
 const express = require('express');
 const upload = require('../../config/multerConfig'); // 한 단계 위로 가서 config 접근
-const { updateAddress, updateResume, userInfo } = require('../controllers/myPageController');
+const { updateAddress, updateResume, userInfo, userAccount } = require('../controllers/myPageController');
 const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
 
 const router = express.Router();
@@ -143,20 +143,50 @@ router.patch('/user/address', authenticateJWTtoken, updateAddress);
  *                    type: string
  *                    example: "S3 업로드 중 서버 오류가 발생했습니다."
  */
-router.patch('/user/resume', upload.single('resume'), updateResume);
+router.patch('/user/resume', authenticateJWTtoken, upload.single('resume'), updateResume);
 
 /**
  * @swagger
- * /api/users/me:
+ * /api/user/mypage:
  *    get:
- *      summary: 내 정보 조회
+ *      summary: 마이페이지 조회
  *      tags: [User]
  *      security:
  *        - Authorization: []
- *      description: 현재 로그인한 사용자의 username, email, address 정보를 반환합니다.
+ *      description: 현재 로그인한 사용자의 address와 resumeUrl 정보를 반환합니다.
  *      responses:
  *        200:
- *          description: 유저 정보 조회 성공
+ *          description: 마이페이지 조회 성공
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  address:
+ *                    type: string
+ *                    example: "서울특별시 강남구..."
+ *                  resumeUrl:
+ *                    type: string
+ *                    example: "https://example.com/resume.pdf"
+ *        401:
+ *          description: 인증되지 않은 사용자
+ *        404:
+ *          description: 유저를 찾을 수 없음
+ */
+router.get('/api/user/mypage', userInfo);
+
+/**
+ * @swagger
+ * /api/user/account:
+ *    get:
+ *      summary: 마이페이지 조회
+ *      tags: [User]
+ *      security:
+ *        - Authorization: []
+ *      description: 현재 로그인한 사용자의 username과 email 정보를 반환합니다.
+ *      responses:
+ *        200:
+ *          description: 마이페이지 조회 성공
  *          content:
  *            application/json:
  *              schema:
@@ -164,19 +194,16 @@ router.patch('/user/resume', upload.single('resume'), updateResume);
  *                properties:
  *                  username:
  *                    type: string
- *                    example: "link_canvas_user"
+ *                    example: "홍길동"
  *                  email:
  *                    type: string
- *                    example: "user@example.com"
- *                  address:
- *                    type: string
- *                    example: "서울특별시 강남구..."
+ *                    example: "hong@example.com"
  *        401:
  *          description: 인증되지 않은 사용자
  *        404:
  *          description: 유저를 찾을 수 없음
  */
-router.get('/users/me', authenticateJWTtoken, userInfo);
+router.get('/api/user/account', userAccount);
 
 
 module.exports = router;
