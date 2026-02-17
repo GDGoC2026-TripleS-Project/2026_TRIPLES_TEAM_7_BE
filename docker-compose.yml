@@ -8,7 +8,7 @@ services:
     environment:
       # 주의: 콜론(:) 뒤에 반드시 한 칸을 띄워야 합니다!
       MYSQL_DATABASE: database_test
-      MYSQL_ROOT_PASSWORD: process.env.DB_PASSWORD
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
