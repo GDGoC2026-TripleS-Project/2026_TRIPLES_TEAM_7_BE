@@ -5,6 +5,11 @@
  *     description: 면접 질문 관련 API
  *
  * components:
+ *   securitySchemes:
+ *     Authorization:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
  *   schemas:
  *     InterviewQuestion:
  *       type: object
@@ -69,9 +74,9 @@ const {
 } = require('../services/interviewService');
 
 function requireUserId(req, res) {
-  const userId = Number(req.header('X-USER-ID'));
+  const userId = req.user.id;
   if (!Number.isInteger(userId)) {
-    res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'X-USER-ID required' });
+    res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'JWT token required' });
     return null;
   }
   return userId;
@@ -92,13 +97,6 @@ function requireIntParam(req, res, name) {
  *   post:
  *     summary: 내 카드 전체를 INTERVIEW 상태로 변경
  *     tags: [Interview]
- *     parameters:
- *       - in: header
- *         name: X-USER-ID
- *         required: true
- *         schema:
- *           type: integer
- *         example: 2
  *     responses:
  *       200:
  *         description: 카드 상태 변경 성공
@@ -130,12 +128,6 @@ router.post('/interview/cards/status', authenticateJWTtoken, async (req, res, ne
  *     summary: AI 면접 질문 3개 생성 (키워드 2개 포함)
  *     tags: [Interview]
  *     parameters:
- *       - in: header
- *         name: X-USER-ID
- *         required: true
- *         schema:
- *           type: integer
- *         example: 2
  *       - in: path
  *         name: cardId
  *         required: true
@@ -179,12 +171,6 @@ router.post('/cards/:cardId/interview/questions', authenticateJWTtoken, async (r
  *     summary: 활성화된 면접 질문 조회
  *     tags: [Interview]
  *     parameters:
- *       - in: header
- *         name: X-USER-ID
- *         required: true
- *         schema:
- *           type: integer
- *         example: 2
  *       - in: path
  *         name: cardId
  *         required: true

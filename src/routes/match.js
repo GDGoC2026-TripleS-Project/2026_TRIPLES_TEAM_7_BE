@@ -10,6 +10,16 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  *   name: Match
  *   description: 이력서-공고 매칭 API
  */
+/**
+ * @swagger
+ * components:
+ *   securitySchemes:
+ *     Authorization:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
+
 
 /**
  * @swagger
@@ -19,12 +29,6 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  *     description: 이력서 파일 URL을 기반으로 AI 매칭을 생성하고 결과를 저장합니다.
  *     tags: [Match]
  *     parameters:
- *       - in: header
- *         name: X-USER-ID
- *         required: true
- *         schema:
- *           type: integer
- *         example: 1
  *       - in: path
  *         name: cardId
  *         required: true
@@ -62,12 +66,12 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  */
 router.post('/cards/:cardId/match', authenticateJWTtoken, async (req, res, next) => {
   try {
-    const userId = Number(req.header('X-USER-ID'));
+    const userId = req.user.id;
     const cardId = Number(req.params.cardId);
     const { fileUrl } = req.body;
 
     if (!userId || Number.isNaN(userId)) {
-      return res.status(400).json({ ok: false, message: 'X-USER-ID header is required' });
+      return res.status(400).json({ ok: false, message: 'userId is required' });
     }
     if (!cardId || Number.isNaN(cardId)) {
       return res.status(400).json({ ok: false, message: 'cardId is invalid' });
@@ -91,12 +95,6 @@ router.post('/cards/:cardId/match', authenticateJWTtoken, async (req, res, next)
  *     description: 특정 카드에 대한 사용자의 가장 최근 매칭 결과를 조회합니다.
  *     tags: [Match]
  *     parameters:
- *       - in: header
- *         name: X-USER-ID
- *         required: true
- *         schema:
- *           type: integer
- *         example: 1
  *       - in: path
  *         name: cardId
  *         required: true
@@ -126,11 +124,11 @@ router.post('/cards/:cardId/match', authenticateJWTtoken, async (req, res, next)
  */
 router.get('/cards/:cardId/match', async (req, res, next) => {
   try {
-    const userId = Number(req.header('X-USER-ID'));
+    const userId = req.user.id;
     const cardId = Number(req.params.cardId);
 
     if (!userId || Number.isNaN(userId)) {
-      return res.status(400).json({ ok: false, message: 'X-USER-ID header is required' });
+      return res.status(400).json({ ok: false, message: 'userId is required' });
     }
     if (!cardId || Number.isNaN(cardId)) {
       return res.status(400).json({ ok: false, message: 'cardId is invalid' });

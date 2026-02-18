@@ -8,7 +8,9 @@ exports.login = async (req, res, next) => {
     try {
         const { uid, email, name } = req.user;
 
-        let user = await User.findOne({ email: email });
+        let user = await User.findOne({
+            where: { firebase_uid: uid }
+         });
         if (!user) {
             user = new User({
                 firebase_uid: uid,

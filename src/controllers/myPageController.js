@@ -2,7 +2,7 @@ const myPageService = require('../services/myPageService');
 
 exports.updateAddress = async (req, res) => {
     try {
-        const userId = Number(req.header('X-USER-ID'));
+        const userId = req.user.id;
         console.log(userId);
         const { address } = req.body;
         
@@ -24,7 +24,7 @@ exports.updateAddress = async (req, res) => {
 
 exports.updateResume = async (req, res) => {
     try {
-        const userId = Number(req.header('X-USER-ID'));
+        const userId = req.user.id;
         // multer-s3가 생성한 S3 파일 URL은 req.file.location에 담겨 있습니다.
         const resumeUrl = req.file?.location || null; // 파일이 업로드되지 않았을 때를 대비하여 null로 초기화
         // const resumeUrl = "req.file?.location";
@@ -47,7 +47,7 @@ exports.updateResume = async (req, res) => {
 
 exports.userInfo = async (req, res, next) => {
     try {
-        const userId = Number(req.header('X-USER-ID'));
+        const userId = req.user.id;
 
         const result = User.findByPk(userId, {
             // 요청하신 3가지 정보만 선택하여 리턴
@@ -70,7 +70,7 @@ exports.userInfo = async (req, res, next) => {
 
 exports.userAccount = async (req, res, next) => {
     try {
-        const userId = Number(req.header('X-USER-ID'));
+        const userId = req.user.id;
 
         const result = User.findByPk(userId, {
             // 요청하신 3가지 정보만 선택하여 리턴

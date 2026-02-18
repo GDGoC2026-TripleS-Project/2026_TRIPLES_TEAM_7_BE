@@ -15,18 +15,46 @@ exports.getCanvasItems = async (req, res) => {
   }
 };
 
-// exports.getSortedCanvasItems = async (req, res) => {
-//   try {
-//     const userId = req.user.id;
-//     const sort = req.query.sort;
-//     // const sortedCanvasItems = await canvasService.getSortedCanvasItems(userId, sort);
+exports.getSortedCanvasItems = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const sort = req.query.sort;
+    let sortedCanvasItems;
 
-//     res.status(200).json(sort);
-//   } catch (error) {
-//     res.status(500).json({
-//       success: false,
-//       sort: req.query.sort,
-//       error: error.message
-//     });
-//   }
-// };
+    const result = User.findByPk(userId, {
+            // 요청하신 3가지 정보만 선택하여 리턴
+            attributes: ['address', 'resumeUrl']
+        });
+        if(job_cards.findByUserId(userId) === null) {
+          return res.status(204).json({
+            success: true,
+            message: '필터링 할 카드가 없습니다.',
+            data: []
+          });
+        }
+
+    switch (sort) {
+      case 'deadline':
+         sortedCanvasItems = await canvasService.getSortedCanvasItemsbyDeadline(userId);
+        break;
+      case 'salary':
+        sortedCanvasItems = await canvasService.getSortedCanvasItemsbySalary(userId);
+        break;
+      case 'distance':
+        sortedCanvasItems = await canvasService.getSortedCanvasItemsbyDistance(userId);
+        break;
+      case 'matchedPercent':
+        sortedCanvasItems = await canvasService.getSortedCanvasItemsbyMatchedPercent(userId);
+        break;
+    }       
+
+    res.status(200).json(sortedCanvasItems);
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      sort: req.query.sort,
+      error: error.message
+    });
+  }
+};
