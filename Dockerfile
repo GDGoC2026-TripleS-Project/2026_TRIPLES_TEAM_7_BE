@@ -15,4 +15,4 @@ RUN apt-get update && apt-get install -y curl \
 
 EXPOSE 8080
 
-CMD ["/app/wait-for-it.sh", "db:3306", "--", "npm", "start"]
+CMD ["npm", "start"]
