@@ -8,11 +8,6 @@ RUN npm install
 
 COPY . .
 
-RUN apt-get update && apt-get install -y curl \
-  && curl -o /app/wait-for-it.sh https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh \
-  && chmod +x /app/wait-for-it.sh \
-  && rm -rf /var/lib/apt/lists/*
-
 EXPOSE 8080
 
 CMD ["npm", "start"]
