@@ -7,6 +7,15 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  *   description: 카드 CRUD 및 링크스크래퍼
  */
 
+/**
+ * @swagger
+ * components:
+ *   securitySchemes:
+ *     Authorization:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
 const express = require('express');
 const router = express.Router();
 const cardController = require('../controllers/cardController');
@@ -99,14 +108,6 @@ router.post('/ai/test-job', cardController.analyzeJobPosting);
  *       채용 공고 URL을 기반으로 AI 분석을 수행한 뒤,
  *       job_post, job_card, canvas_item을 생성합니다.
  *     tags: [Cards]
- *     parameters:
- *       - in: header
- *         name: X-USER-ID
- *         required: true
- *         schema:
- *           type: integer
- *         description: 사용자 ID
- *         example: 1
  *     requestBody:
  *       required: true
  *       content:
@@ -165,7 +166,7 @@ router.post('/ai/test-job', cardController.analyzeJobPosting);
  *               example:
  *                 isSuccess: false
  *                 code: AUTH-401
- *                 message: X-USER-ID required
+ *                 message: token required
  *       500:
  *         description: 서버 내부 오류
  *         content:
@@ -188,14 +189,9 @@ router.post('/card/create', authenticateJWTtoken, cardController.createCard);
  *       카드 ID를 기반으로 해당 카드를 완전 삭제합니다.
  *       카드와 연결된 job_post 및 관련 데이터도 함께 삭제됩니다.
  *     tags: [Cards]
+ *     security:
+ *       - Authorization: []
  *     parameters:
- *       - in: header
- *         name: X-USER-ID
- *         required: true
- *         schema:
- *           type: integer
- *         description: 사용자 ID
- *         example: 1
  *       - in: path
  *         name: cardId
  *         required: true
@@ -232,19 +228,12 @@ router.delete('/card/delete/:cardId', authenticateJWTtoken, cardController.delet
  *     summary: 카드 상세 조회
  *     description: >
  *       특정 사용자의 AI 요약 카드 상세 정보를 조회합니다.  
- *       X-USER-ID 헤더와 JWT 인증이 필요합니다.
+ *       JWT 인증이 필요합니다.
  *     tags:
  *       - Cards
  *     security:
- *       - bearerAuth: []
+ *       - Authorization: []
  *     parameters:
- *       - in: header
- *         name: X-USER-ID
- *         required: true
- *         schema:
- *           type: integer
- *         description: 사용자 고유 ID
- *
  *       - in: path
  *         name: cardId
  *         required: true
@@ -378,7 +367,7 @@ router.delete('/card/delete/:cardId', authenticateJWTtoken, cardController.delet
  *       400:
  *         description: cardId 누락
  *       401:
- *         description: 인증 실패 또는 X-USER-ID 누락
+ *         description: 인증 실패 또는 JWT 토큰 누락
  *       404:
  *         description: 카드가 존재하지 않음
  *       500:

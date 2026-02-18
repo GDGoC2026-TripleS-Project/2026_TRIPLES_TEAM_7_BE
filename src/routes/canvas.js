@@ -88,23 +88,24 @@ const router = express.Router();
  *       404:
  *         description: 카드 정보를 찾을 수 없음
  */
-router.get('/api/canvas', getCanvasItems);
+router.get('/canvas', getCanvasItems);
 
 /**
  * @swagger
- * /api/canvas/prioritized:
+ * /api/canvas/sorted:
  *   get:
  *     summary: 우선순위별 카드 조회
  *     tags: [Canvas]
  *     security:
  *       - Authorization: []
- *     description: 홈 화면(캔버스)에 표시될 모든 카드를 선택한 기준(deadline, salary, distance)에 따라 우선순위를 매기고, 같은 우선순위의 카드들을 묶어서 반환합니다. 각 카드에는 cardId만 포함됩니다.
+ *     description: 홈 화면(캔버스)에 표시될 모든 카드를 선택한 기준(deadline, salary, distance, matchedPercent)에 따라 우선순위를 매기고, 같은 우선순위의 카드들을 묶어서 반환합니다. 각 카드에는 cardId만 포함됩니다.
+ *                  마감일 지난 카드, 연봉 미정 카드, 거리 미정 카드, 매칭률 미정 카드는 가장 낮은 우선순위를 갖습니다.
  *     parameters:
  *       - in: query
  *         name: sort
  *         schema:
  *           type: string
- *           enum: [deadline, salary, distance]
+ *           enum: [deadline, salary, distance, matchedPercent]
  *         required: true
  *         description: 정렬 기준 (마감일, 연봉, 거리 중 하나)
  *     responses:
@@ -131,26 +132,13 @@ router.get('/api/canvas', getCanvasItems);
  *             example:
  *               priorities:
  *                 - priorityLevel: 1
+ *                   daysLeft: 2
  *                   cardIds: [1, 2]
- *                 - priorityLevel: 2
- *                   cardIds: [3]
- *                 - priorityLevel: 19
- *                   cardIds: [4, 5]
  *       401:
  *         description: 인증되지 않은 사용자
  *       404:
  *         description: 카드 정보를 찾을 수 없음
  */
-router.get('/api/canvas/sorted', async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const sort = req.query.sort;
-    // const sortedCanvasItems = await canvasService.getSortedCanvasItems(userId, sort); 
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  } });
+router.get('/canvas/sorted', getSortedCanvasItems);
 
 module.exports = router;

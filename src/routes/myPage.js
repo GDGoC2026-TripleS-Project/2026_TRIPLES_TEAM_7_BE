@@ -13,6 +13,16 @@ const router = express.Router();
 
 /**
  * @swagger
+ * components:
+ *   securitySchemes:
+ *     Authorization:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
+
+/**
+ * @swagger
  * /api/user/address:
  *   patch:
  *      summary: 로그인한 유저의 도로명 주소 정보를 최초 설정 및 업데이트합니다.

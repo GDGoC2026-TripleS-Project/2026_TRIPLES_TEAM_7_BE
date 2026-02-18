@@ -25,9 +25,9 @@ exports.createCard = async (req, res) => {
       return res.status(400).json({ isSuccess: false, code: 'CARD-401', message: 'url은 필수입니다.' });
     }
 
-    const userId = Number(req.header('X-USER-ID'));
+    const userId = req.user.id;
     if (!Number.isInteger(userId)) {
-      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'X-USER-ID required' });
+      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'token required' });
     }
       
     const result = await cardService.createCard({userId, url});
@@ -47,9 +47,9 @@ exports.createCard = async (req, res) => {
 
 exports.deleteCard = async(req, res) => {
   try{
-    const userId = Number(req.header('X-USER-ID'));
+    const userId = req.user.id;
     if (!Number.isInteger(userId)) {
-      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'X-USER-ID required' });
+      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'JWT token required' });
     }
     
     const cardId = Number(req.params.cardId);
@@ -76,9 +76,9 @@ exports.deleteCard = async(req, res) => {
 
 exports.getCard = async(req, res) => {
   try{
-    const userId = Number(req.header('X-USER-ID'));
+    const userId = req.user.id;
     if (!Number.isInteger(userId)) {
-      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'X-USER-ID required' });
+      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'JWT token required' });
     }
     
     const cardId = Number(req.params.cardId);
