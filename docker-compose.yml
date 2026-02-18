@@ -3,6 +3,7 @@ version: '3.8'
 services:
   db:
     image: mysql:8.0
+    container_name: mysql-db
     restart: always
     environment:
       # 주의: 콜론(:) 뒤에 반드시 한 칸을 띄워야 합니다!
@@ -15,6 +16,7 @@ services:
 
   node-app:
     image: node-backend
+    container_name: node-backend
     restart: always
     depends_on:
       - db
