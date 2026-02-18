@@ -3,6 +3,7 @@ const { sequelize } = require('./src/models');
 const dotenv = require('dotenv');
 dotenv.config(); // .env 파일 로드
 console.log('[boot] USE_MOCK=', process.env.USE_MOCK);
+console.log('DB_HOST=', process.env.DB_HOST);
 
 const createError = require('http-errors');
 const express = require('express');
