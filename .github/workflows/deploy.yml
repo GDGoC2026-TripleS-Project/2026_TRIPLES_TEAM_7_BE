@@ -50,7 +50,7 @@ jobs:
             sudo docker rm -f node-app || true
 
             # 새로 실행
-            sudo docker-compose up -d
+            sudo docker-compose up -d --force-recreate
 
             rm node-backend.tar.gz
             sudo docker image prune -f

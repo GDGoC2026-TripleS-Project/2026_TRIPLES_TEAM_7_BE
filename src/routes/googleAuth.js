@@ -187,7 +187,7 @@ router.post('/auth/verifyToken', refreshToken);
  *        401:
  *          description: 인증되지 않은 사용자
  */
-router.post('/auth/logout', googleLogout);
+router.post('/auth/logout', logout);
 
 /**
  * @swagger

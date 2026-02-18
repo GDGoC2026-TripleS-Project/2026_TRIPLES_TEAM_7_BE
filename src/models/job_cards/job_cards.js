@@ -77,6 +77,11 @@ module.exports = class job_cards extends Sequelize.Model {
         type: Sequelize.ENUM('CANVAS', 'INTERVIEW'), // 캔버스, 인터뷰
         allowNull: false,
       },
+      isAnalyzed: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
     }, {
       sequelize,
       timestamps: true,
