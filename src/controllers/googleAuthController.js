@@ -8,20 +8,20 @@ exports.login = async (req, res, next) => {
     try {
         const { uid, email, name } = req.user;
 
-        // let user = await User.findOne({
-        //     where: { firebase_uid: uid }
-        //  });
-        // if (!user) {
-        //     user = new User({
-        //         firebase_uid: uid,
-        //         email: email,
-        //         username: name
-        //     });
-        //     await user.save();
+        let user = await User.findOne({
+            where: { firebase_uid: uid }
+         });
+        if (!user) {
+            user = new User({
+                firebase_uid: uid,
+                email: email,
+                username: name
+            });
+            await user.save();
             console.log('New user');
-        // } else {
-        //     console.log('Existing user');
-        // }
+        } else {
+            console.log('Existing user');
+        }
 
         const customToken = jwt.sign({ firebase_uid: uid }, ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
         const refreshCustomToken = jwt.sign({ firebase_uid: uid }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
