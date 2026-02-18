@@ -9,10 +9,10 @@
  * @swagger
  * components:
  *   securitySchemes:
- *     UserIdHeader:
- *       type: apiKey
- *       in: header
- *       name: X-USER-ID
+ *     Authorization:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
  *   schemas:
  *     BaseResponse:
  *       type: object
@@ -48,14 +48,7 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  *     description: 로그인 유저의 모든 GAP 상태 체크리스트를 조회합니다.
  *     tags: [Checklists]
  *     security:
- *       - UserIdHeader: []
- *     parameters:
- *       - in: header
- *         name: X-USER-ID
- *         required: true
- *         schema:
- *           type: integer
- *         example: 1
+ *       - Authorization: : []
  *     responses:
  *       200:
  *         description: GAP 체크리스트 목록 반환
@@ -64,7 +57,7 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  *             schema:
  *               $ref: '#/components/schemas/BaseResponse'
  *       401:
- *         description: X-USER-ID 헤더 누락
+ *         description: JWT 인증 실패
  *         content:
  *           application/json:
  *             schema:
@@ -72,9 +65,9 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  */
 router.get('/checklists/all', authenticateJWTtoken, async (req, res, next) => {
   try {
-    const userId = Number(req.header('X-USER-ID'));
+    const userId = req.user.id;
     if (!Number.isInteger(userId)) {
-      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'X-USER-ID required' });
+      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'token required' });
     }
     const data = await getAllGapChecklistsByUser(userId);
     res.json({ isSuccess: true, code: 'SUCCESS-200', data });
@@ -89,12 +82,6 @@ router.get('/checklists/all', authenticateJWTtoken, async (req, res, next) => {
  *     description: 특정 매치(matchId)에 대한 체크리스트를 조회합니다.
  *     tags: [Checklists]
  *     parameters:
- *       - in: header
- *         name: X-USER-ID
- *         required: true
- *         schema:
- *           type: integer
- *         example: 1
  *       - in: path
  *         name: matchId
  *         required: true
@@ -123,14 +110,8 @@ router.get('/matches/:matchId/checklists', authenticateJWTtoken, async (req, res
  *     description: 특정 체크리스트의 완료 상태를 토글합니다.
  *     tags: [Checklists]
  *     security:
- *       - UserIdHeader: []
+ *       - Authorization: []
  *     parameters:
- *       - in: header
- *         name: X-USER-ID
- *         required: true
- *         schema:
- *           type: integer
- *         example: 2
  *       - in: path
  *         name: checklistId
  *         required: true
@@ -145,9 +126,9 @@ router.get('/matches/:matchId/checklists', authenticateJWTtoken, async (req, res
  */
 router.patch('/checklists/:checklistId/toggle', authenticateJWTtoken, async (req, res, next) => {
   try {
-    const userId = Number(req.header('X-USER-ID'));
+    const userId = req.user.id;
     if (!Number.isInteger(userId)) {
-      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'X-USER-ID required' });
+      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'userid is required' });
     }
     const checklistId = Number(req.params.checklistId);
     const result = await toggleChecklist(checklistId, userId);
@@ -163,14 +144,8 @@ router.patch('/checklists/:checklistId/toggle', authenticateJWTtoken, async (req
  *     description: 특정 매치에서 이력서 업데이트 팝업을 띄워야 하는지 여부를 조회합니다.
  *     tags: [Checklists]
  *     security:
- *       - UserIdHeader: []
+ *       - Authorization: : []
  *     parameters:
- *       - in: header
- *         name: X-USER-ID
- *         required: true
- *         schema:
- *           type: integer
- *         example: 2
  *       - in: path
  *         name: matchId
  *         required: true
@@ -185,9 +160,9 @@ router.patch('/checklists/:checklistId/toggle', authenticateJWTtoken, async (req
  */
 router.get('/matches/:matchId/resume-popup-trigger', authenticateJWTtoken, async (req, res, next) => {
   try {
-    const userId = Number(req.header('X-USER-ID'));
+    const userId = req.user.id;
     if (!Number.isInteger(userId)) {
-      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'X-USER-ID required' });
+      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'userid is required' });
     }
     const matchId = Number(req.params.matchId);
     const data = await getResumePopupTrigger(matchId, userId);

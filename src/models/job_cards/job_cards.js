@@ -79,7 +79,7 @@ module.exports = class job_cards extends Sequelize.Model {
       },
       isAnalyzed: {
         type: Sequelize.BOOLEAN,
-        allowNull: false,
+        allowNull: true,
         defaultValue: false,
       },
     }, {
