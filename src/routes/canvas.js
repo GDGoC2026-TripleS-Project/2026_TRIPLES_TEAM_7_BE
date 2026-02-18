@@ -88,7 +88,7 @@ const router = express.Router();
  *       404:
  *         description: 카드 정보를 찾을 수 없음
  */
-router.get('/canvas', getCanvasItems);
+router.get('/canvas', authenticateJWTtoken, getCanvasItems);
 
 /**
  * @swagger
@@ -139,6 +139,6 @@ router.get('/canvas', getCanvasItems);
  *       404:
  *         description: 카드 정보를 찾을 수 없음
  */
-// router.get('/canvas/sorted', getSortedCanvasItems);
+//router.get('/canvas/sorted', authenticateJWTtoken, getSortedCanvasItems);
 
 module.exports = router;

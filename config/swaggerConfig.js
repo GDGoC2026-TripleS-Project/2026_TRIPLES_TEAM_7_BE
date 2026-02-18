@@ -14,9 +14,8 @@ const options = {
         securitySchemes: {
             Authorization: {
                 type: "http",
-                in: "header",
-                name: "Authorization",
                 scheme: "bearer",
+                bearerFormat: "JWT",
             },
         },
     },
