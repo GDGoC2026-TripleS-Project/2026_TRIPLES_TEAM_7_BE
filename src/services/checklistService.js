@@ -62,18 +62,29 @@ async function getAllGapChecklistsByUser(userId) {
 }
 
 // 특정 매치의 체크리스트 상세 조회 (DB 기반)
-async function getMatchChecklists(matchId) {
+async function getMatchChecklists(matchId, userId) {
   const match = await db.match_percent.findByPk(matchId);
   if (!match) {
     return { isSuccess: false, code: 'MATCH-404', message: 'match not found' };
   }
 
+  // 소유권 검증: 이 matchId에 userId의 결과가 하나라도 있어야 함
+  const owned = await db.match_result.findOne({
+    where: { matchId, userId },
+    attributes: ['id'],
+  });
+  if (!owned) {
+    return { isSuccess: false, code: 'AUTH-403', message: 'Forbidden' };
+  }
+
+  // 조회도 userId로 제한 
   const results = await db.match_result.findAll({
-    where: { matchId },
+    where: { matchId, userId },
     order: [['id', 'ASC']],
   });
 
   const gapResultIds = results.filter(r => r.cardStatus === 'GAP').map(r => r.id);
+
   let checklists = [];
   if (gapResultIds.length > 0) {
     checklists = await db.improve_checklist.findAll({
@@ -111,15 +122,17 @@ async function getMatchChecklists(matchId) {
     data: { matchId, createdAt: match.createdAt, matchResults },
   };
 }
+// ✅ Gemini 연동 체크리스트 생성 함수
+async function generateChecklistsForMatch(matchId, userId, { reset = false } = {}) {
+  const owned = await db.match_result.findOne({ where: { matchId, userId }, attributes: ['id'] });
+  if (!owned) return { isSuccess: false, code: 'AUTH-403', message: 'Forbidden' };
 
-// ✅ [중요] Gemini 연동 체크리스트 생성 함수
-async function generateChecklistsForMatch(matchId, { reset = false } = {}) {
   try {
     const gapResults = await db.match_result.findAll({
-      where: { matchId, cardStatus: 'GAP' },
+      where: { matchId, userId, cardStatus: 'GAP' },
       order: [['id', 'ASC']],
-      limit: 3
-    });
+      limit: 3,
+  });
 
     if (gapResults.length === 0) return { isSuccess: true, message: 'no gap found' };
 

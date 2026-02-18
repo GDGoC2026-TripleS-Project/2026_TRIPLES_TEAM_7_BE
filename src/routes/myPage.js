@@ -13,16 +13,6 @@ const router = express.Router();
 
 /**
  * @swagger
- * components:
- *   securitySchemes:
- *     Authorization:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
- */
-
-/**
- * @swagger
  * /api/user/address:
  *   patch:
  *      summary: 로그인한 유저의 도로명 주소 정보를 최초 설정 및 업데이트합니다.
@@ -183,7 +173,7 @@ router.patch('/user/resume', authenticateJWTtoken, upload.single('resume'), upda
  *        404:
  *          description: 유저를 찾을 수 없음
  */
-router.get('/api/user/mypage', userInfo);
+router.get('/user/mypage', userInfo);
 
 /**
  * @swagger
@@ -213,7 +203,7 @@ router.get('/api/user/mypage', userInfo);
  *        404:
  *          description: 유저를 찾을 수 없음
  */
-router.get('/api/user/account', userAccount);
+router.get('/user/account', userAccount);
 
 
 module.exports = router;
