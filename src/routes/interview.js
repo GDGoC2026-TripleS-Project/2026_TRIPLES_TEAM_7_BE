@@ -1,15 +1,10 @@
 /**
  * @swagger
  * tags:
- *   - name: Interview
- *     description: 면접 질문 관련 API
+ *   name: Interview
+ *   description: 면접 질문 관련 API
  *
  * components:
- *   securitySchemes:
- *     Authorization:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
  *   schemas:
  *     InterviewQuestion:
  *       type: object
@@ -27,9 +22,7 @@
  *           type: array
  *           items:
  *             type: string
- *           example:
- *             - 문제 해결
- *             - 성장성
+ *           example: ["문제 해결", "성장성"]
  *
  *     InterviewQuestionSetData:
  *       type: object
@@ -74,7 +67,7 @@ const {
 } = require('../services/interviewService');
 
 function requireUserId(req, res) {
-  const userId = req.user.id;
+  const userId = req.user?.id;
   if (!Number.isInteger(userId)) {
     res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'JWT token required' });
     return null;
@@ -97,6 +90,8 @@ function requireIntParam(req, res, name) {
  *   post:
  *     summary: 내 카드 전체를 INTERVIEW 상태로 변경
  *     tags: [Interview]
+ *     security:
+ *       - Authorization: []
  *     responses:
  *       200:
  *         description: 카드 상태 변경 성공
@@ -109,8 +104,9 @@ function requireIntParam(req, res, name) {
  *                 userId: 2
  *                 updatedCount: 3
  *       401:
- *         description: 사용자 헤더 누락
+ *         description: JWT 인증 실패 (토큰 누락/만료/위조)
  */
+
 router.post('/interview/cards/status', authenticateJWTtoken, async (req, res, next) => {
   try {
     const userId = requireUserId(req, res);
@@ -127,6 +123,8 @@ router.post('/interview/cards/status', authenticateJWTtoken, async (req, res, ne
  *   post:
  *     summary: AI 면접 질문 3개 생성 (키워드 2개 포함)
  *     tags: [Interview]
+ *     security:
+ *       - Authorization: []
  *     parameters:
  *       - in: path
  *         name: cardId
@@ -144,12 +142,13 @@ router.post('/interview/cards/status', authenticateJWTtoken, async (req, res, ne
  *       400:
  *         description: 잘못된 요청
  *       401:
- *         description: 사용자 헤더 누락
+ *         description: JWT 인증 실패 (토큰 누락/만료/위조)
  *       403:
  *         description: 카드 소유권 없음
  *       502:
  *         description: AI 생성 실패
  */
+
 router.post('/cards/:cardId/interview/questions', authenticateJWTtoken, async (req, res, next) => {
   try {
     const userId = requireUserId(req, res);
@@ -170,6 +169,8 @@ router.post('/cards/:cardId/interview/questions', authenticateJWTtoken, async (r
  *   get:
  *     summary: 활성화된 면접 질문 조회
  *     tags: [Interview]
+ *     security:
+ *       - Authorization: []
  *     parameters:
  *       - in: path
  *         name: cardId
@@ -185,7 +186,7 @@ router.post('/cards/:cardId/interview/questions', authenticateJWTtoken, async (r
  *             schema:
  *               $ref: '#/components/schemas/InterviewQuestionSetResponse'
  *       401:
- *         description: 사용자 헤더 누락
+ *         description: JWT 인증 실패 (토큰 누락/만료/위조)
  *       403:
  *         description: 카드 소유권 없음
  */

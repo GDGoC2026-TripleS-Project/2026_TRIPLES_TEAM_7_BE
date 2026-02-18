@@ -7,15 +7,6 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  *   description: 카드 CRUD 및 링크스크래퍼
  */
 
-/**
- * @swagger
- * components:
- *   securitySchemes:
- *     Authorization:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
- */
 const express = require('express');
 const router = express.Router();
 const cardController = require('../controllers/cardController');

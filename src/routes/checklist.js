@@ -8,11 +8,6 @@
 /**
  * @swagger
  * components:
- *   securitySchemes:
- *     Authorization:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
  *   schemas:
  *     BaseResponse:
  *       type: object
@@ -21,15 +16,21 @@
  *           type: boolean
  *         code:
  *           type: string
+ *         data:
+ *           type: object
  *     ErrorResponse:
- *       allOf:
- *         - $ref: '#/components/schemas/BaseResponse'
- *         - type: object
- *           properties:
- *             message:
- *               type: string
+ *       type: object
+ *       properties:
+ *         isSuccess:
+ *           type: boolean
+ *           example: false
+ *         code:
+ *           type: string
+ *           example: AUTH-401
+ *         message:
+ *           type: string
+ *           example: JWT 인증 실패
  */
-
 const express = require('express');
 const router = express.Router();
 const {
@@ -48,7 +49,7 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  *     description: 로그인 유저의 모든 GAP 상태 체크리스트를 조회합니다.
  *     tags: [Checklists]
  *     security:
- *       - Authorization: : []
+ *       - Authorization: []
  *     responses:
  *       200:
  *         description: GAP 체크리스트 목록 반환
@@ -65,7 +66,7 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  */
 router.get('/checklists/all', authenticateJWTtoken, async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const userId = Number(req.user?.id);
     if (!Number.isInteger(userId)) {
       return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'token required' });
     }
@@ -81,6 +82,8 @@ router.get('/checklists/all', authenticateJWTtoken, async (req, res, next) => {
  *     summary: 특정 매치 체크리스트 조회
  *     description: 특정 매치(matchId)에 대한 체크리스트를 조회합니다.
  *     tags: [Checklists]
+ *     security:
+ *       - Authorization: []
  *     parameters:
  *       - in: path
  *         name: matchId
@@ -91,13 +94,28 @@ router.get('/checklists/all', authenticateJWTtoken, async (req, res, next) => {
  *     responses:
  *       200:
  *         description: 매치 체크리스트 반환
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/BaseResponse'
  *       400:
  *         description: 잘못된 matchId
+ *       401:
+ *         description: JWT 인증 실패
  */
 router.get('/matches/:matchId/checklists', authenticateJWTtoken, async (req, res, next) => {
   try {
+    const userId = Number(req.user?.id);
+    if (!Number.isInteger(userId)) {
+      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'JWT token required' });
+    }
+
     const matchId = Number(req.params.matchId);
-    const result = await getMatchChecklists(matchId);
+    if (!Number.isInteger(matchId)) {
+      return res.status(400).json({ isSuccess: false, code: 'BAD_REQUEST', message: 'matchId must be integer' });
+    }
+
+    const result = await getMatchChecklists(matchId, userId);
     res.json(result);
   } catch (err) { next(err); }
 });
@@ -121,12 +139,16 @@ router.get('/matches/:matchId/checklists', authenticateJWTtoken, async (req, res
  *     responses:
  *       200:
  *         description: 토글 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/BaseResponse'
  *       401:
- *         description: 인증 실패
+ *         description: JWT 인증 실패
  */
 router.patch('/checklists/:checklistId/toggle', authenticateJWTtoken, async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const userId = Number(req.user?.id);
     if (!Number.isInteger(userId)) {
       return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'userid is required' });
     }
@@ -144,7 +166,7 @@ router.patch('/checklists/:checklistId/toggle', authenticateJWTtoken, async (req
  *     description: 특정 매치에서 이력서 업데이트 팝업을 띄워야 하는지 여부를 조회합니다.
  *     tags: [Checklists]
  *     security:
- *       - Authorization: : []
+ *       - Authorization: []
  *     parameters:
  *       - in: path
  *         name: matchId
@@ -155,12 +177,16 @@ router.patch('/checklists/:checklistId/toggle', authenticateJWTtoken, async (req
  *     responses:
  *       200:
  *         description: 팝업 트리거 정보 반환
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/BaseResponse'
  *       401:
- *         description: 인증 실패
+ *         description: JWT 인증 실패
  */
 router.get('/matches/:matchId/resume-popup-trigger', authenticateJWTtoken, async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const userId = Number(req.user?.id);
     if (!Number.isInteger(userId)) {
       return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'userid is required' });
     }

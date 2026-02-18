@@ -10,16 +10,6 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  *   name: Match
  *   description: 이력서-공고 매칭 API
  */
-/**
- * @swagger
- * components:
- *   securitySchemes:
- *     Authorization:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
- */
-
 
 /**
  * @swagger
@@ -28,6 +18,8 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  *     summary: AI 매칭 생성
  *     description: 이력서 파일 URL을 기반으로 AI 매칭을 생성하고 결과를 저장합니다.
  *     tags: [Match]
+ *     security:
+ *       - Authorization: []
  *     parameters:
  *       - in: path
  *         name: cardId
@@ -63,6 +55,8 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  *                   example: 72
  *       400:
  *         description: 잘못된 요청
+ *       401:
+ *         description: JWT 인증 실패 (토큰 누락/만료/위조)
  */
 router.post('/cards/:cardId/match', authenticateJWTtoken, async (req, res, next) => {
   try {
@@ -94,6 +88,8 @@ router.post('/cards/:cardId/match', authenticateJWTtoken, async (req, res, next)
  *     summary: 최신 매칭 조회
  *     description: 특정 카드에 대한 사용자의 가장 최근 매칭 결과를 조회합니다.
  *     tags: [Match]
+ *     security:
+ *       - Authorization: []
  *     parameters:
  *       - in: path
  *         name: cardId
@@ -121,17 +117,19 @@ router.post('/cards/:cardId/match', authenticateJWTtoken, async (req, res, next)
  *                   example: 2026-02-09T10:20:50.000Z
  *       400:
  *         description: 잘못된 요청
+ *       401:
+ *         description: JWT 인증 실패 (토큰 누락/만료/위조)
  */
-router.get('/cards/:cardId/match', async (req, res, next) => {
+router.get('/cards/:cardId/match', authenticateJWTtoken, async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const userId = Number(req.user?.id);
     const cardId = Number(req.params.cardId);
 
-    if (!userId || Number.isNaN(userId)) {
-      return res.status(400).json({ ok: false, message: 'userId is required' });
+    if (!Number.isInteger(userId)) {
+      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'token required' });
     }
-    if (!cardId || Number.isNaN(cardId)) {
-      return res.status(400).json({ ok: false, message: 'cardId is invalid' });
+    if (!Number.isInteger(cardId)) {
+      return res.status(400).json({ isSuccess: false, code: 'BAD_REQUEST', message: 'cardId must be integer' });
     }
 
     const result = await matchService.getLatestMatch({ userId, cardId });
