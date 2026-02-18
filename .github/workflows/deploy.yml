@@ -42,12 +42,12 @@ jobs:
           script: |
             cd /home/ubuntu/deploy
             
+            # 기존 이미지, 컨테이너 내리기
+            sudo docker-compose down
+            sudo docker rmi node-backend || true
+            
             # 압축 파일로부터 이미지 로드
             sudo docker load < node-backend.tar.gz
- 
-            # 기존 컨테이너 내리기
-            sudo docker-compose down
-            sudo docker rm -f node-app || true
 
             # 새로 실행
             sudo docker-compose up -d --force-recreate
