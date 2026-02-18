@@ -16,7 +16,7 @@ jobs:
 
       # 1. Docker 이미지 빌드
       - name: Build Docker image
-        run: docker build -t node-backend .
+        run: docker build --no-cache -t node-backend .
 
       # 2. 이미지를 tar 파일로 압축 (용량을 줄이기 위해 gzip 사용)
       - name: Save and compress image
@@ -46,8 +46,8 @@ jobs:
             sudo docker load < node-backend.tar.gz
             
             # 기존 컨테이너 중지 및 삭제
-            sudo docker stop node-app || true
-            sudo docker rm node-app || true
+            sudo docker stop node-app
+            sudo docker rm node-app
             
             # 새 컨테이너 실행 (80포트로 접속하면 8080번 노드 서버로 연결)
             sudo docker run -d --name node-app \
@@ -60,4 +60,4 @@ jobs:
             rm node-backend.tar.gz
             
             # 오래된 이미지들 정리
-            sudo docker image prune -f
+            sudo docker image prune -a -f
