@@ -35,7 +35,7 @@ exports.setCanvasItems = async (req, res) => {
 
 exports.getSortedCanvasItems = async (req, res) => {
   try {
-    const userId = 1;
+    const userId = req.user.id;
     const sort = req.query.sort;
     let sortedCanvasItems;
 
