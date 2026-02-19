@@ -28,6 +28,10 @@ const options = {
       {
         url: "http://localhost:8080", // 요청 URL
         description: '로컬 개발 서버',
+      },
+      {
+        url: "http://52.78.20.212", // 요청 URL
+        description: '원격 개발 서버',
       }
     ],
   },
