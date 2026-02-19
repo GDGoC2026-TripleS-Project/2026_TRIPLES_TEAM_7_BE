@@ -88,7 +88,8 @@ const router = express.Router();
  *       404:
  *         description: 카드 정보를 찾을 수 없음
  */
-router.get('/canvas', getCanvasItems);
+router.get('/canvas', authenticateJWTtoken, getCanvasItems);
+
 
 /**
  * @swagger
@@ -113,7 +114,7 @@ router.get('/canvas', getCanvasItems);
  *               cardId:
  *                 type: integer
  *                 description: 업데이트할 카드의 ID
- *                 example: 4
+ *                 example: 1
  *               x:
  *                 type: number
  *                 format: float
@@ -135,9 +136,21 @@ router.get('/canvas', getCanvasItems);
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 cardId:
- *                   type: integer
- *                   example: 1
+ *                 message:
+ *                   type: string
+ *                   example: "캔버스 카드 위치가 성공적으로 업데이트되었습니다."
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     cardId:
+ *                       type: integer
+ *                       example: 1
+ *                     x:
+ *                       type: number
+ *                       example: 23.456
+ *                     y:
+ *                       type: number
+ *                       example: 45.567
  *       401:
  *         description: 인증 실패 (토큰 누락 또는 만료)
  *       404:
@@ -145,7 +158,7 @@ router.get('/canvas', getCanvasItems);
  *       500:
  *         description: 서버 오류
  */
-router.post('/canvas', setCanvasItems);
+router.post('/canvas', authenticateJWTtoken, setCanvasItems);
 
 
 /**

@@ -14,11 +14,11 @@ module.exports = class canvas_items extends Sequelize.Model {
       },
       canvas_x: { 
         type: Sequelize.FLOAT,
-        allowNull: false,
+        allowNull: true,
       },
       canvas_y: { 
         type: Sequelize.FLOAT,
-        allowNull: false,
+        allowNull: true,
       },
     }, {
       sequelize,

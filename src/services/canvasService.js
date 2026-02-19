@@ -1,5 +1,6 @@
 const job_cards = require('../models/job_cards/job_cards');
 const canvas_items = require('../models/job_cards/canvas_items');
+const match_percent = require('../models/matching/match_percent');
 
 exports.getCanvasItems = async (userId) => {
   const items = await findItemsByUserId(userId);
@@ -12,6 +13,16 @@ exports.getCanvasItems = async (userId) => {
         `SELECT canvas_x, canvas_y FROM canvas_items WHERE cardId = ${item.id}`
       );
 
+      const [matchPercentRows] = await match_percent.sequelize.query(
+        `SELECT matchPercent FROM match_percent WHERE cardId = ${item.id}`
+      );
+
+      if(matchPercentRows.length > 0) {
+        item.dataValues.matchPercent = matchPercentRows[0].matchPercent;
+      }
+
+
+      match_percent
       result.push({ 
         cardId: item.id,
         canvasX: canvasRows[0]?.canvas_x || 0,
@@ -24,7 +35,7 @@ exports.getCanvasItems = async (userId) => {
               employmentType: item.employmentType,
               roleText: item.roleText,
               necessaryStack: item.necessaryStack,
-              isAnalyzed: item.isAnalyzed
+              isAnalyzed: item.dataValues.matchPercent !== undefined ? item.dataValues.matchPercent > 0 : false
             }
           : null,
       });
@@ -44,7 +55,15 @@ exports.setCanvasItems = async (userId, cardId, x, y) => {
     `UPDATE canvas_items SET canvas_x = ${x}, canvas_y = ${y} WHERE cardId = ${cardId}`
   );
 
-  return { success: true, cardId };
+  return {
+    success: true, 
+    message: '캔버스 카드 위치가 성공적으로 업데이트되었습니다.',
+    data: {
+      cardId,
+      x: x,
+      y: y
+    }
+  };
 };
 
 async function findItemsByUserId(userId) {
