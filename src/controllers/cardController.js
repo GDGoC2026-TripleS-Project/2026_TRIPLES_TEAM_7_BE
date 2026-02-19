@@ -70,8 +70,6 @@ exports.deleteCard = async(req, res) => {
     console.error(error);
     return res.status(400).json({ isSuccess: false, code: 'CARD-404', message: '카드 삭제 중 문제가 발생하였습니다.' });
   }
-  
-
 };
 
 exports.getCard = async(req, res) => {
@@ -95,9 +93,8 @@ exports.getCard = async(req, res) => {
       message: "정상적으로 카드 세부정보를 반환했습니다.",
       data: result
     });
-
-
-  }catch(error){
+    
+  } catch(error){
     return res.status(error.status || 500).json({
         isSuccess: false,
         code: error.code || 'SERVER-500',
