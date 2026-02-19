@@ -15,6 +15,24 @@ exports.getCanvasItems = async (req, res) => {
   }
 };
 
+exports.setCanvasItems = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const { cardId, x, y } = req.body;
+
+    const canvasItems = await canvasService.setCanvasItems(userId, cardId, x, y);
+
+    res.status(200).json(canvasItems);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: '캔버스 카드 설정 중 오류가 발생했습니다.',
+      error: error.message
+    });
+  }
+};
+
 // exports.getSortedCanvasItems = async (req, res) => {
 //   try {
 //     const userId = req.user.id;
