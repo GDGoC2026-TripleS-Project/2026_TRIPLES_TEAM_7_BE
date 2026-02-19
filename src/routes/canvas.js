@@ -212,6 +212,6 @@ router.post('/canvas', authenticateJWTtoken, setCanvasItems);
  *       404:
  *         description: 카드 정보를 찾을 수 없음
  */
-router.get('/canvas/sorted', getSortedCanvasItems);
+router.get('/canvas/sorted', authenticateJWTtoken, getSortedCanvasItems);
 
 module.exports = router;
