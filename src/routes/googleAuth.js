@@ -170,7 +170,7 @@ router.post('/auth/googleLogout', authenticateJWTtoken, logout);
  *        500:
  *          description: 서버 내부 오류
  */
-router.post('/auth/verifyToken', refreshToken);
+router.post('/auth/refresh', refreshToken);
 
 /**
  * @swagger
