@@ -18,7 +18,6 @@ exports.getCanvasItems = async (req, res) => {
 exports.setCanvasItems = async (req, res) => {
   try {
     const userId = req.user.id;
-
     const { cardId, x, y } = req.body;
 
     const canvasItems = await canvasService.setCanvasItems(userId, cardId, x, y);
