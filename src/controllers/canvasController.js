@@ -35,7 +35,7 @@ exports.setCanvasItems = async (req, res) => {
 
 exports.getSortedCanvasItems = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = 1;
     const sort = req.query.sort;
     let sortedCanvasItems;
 
@@ -62,7 +62,12 @@ exports.getSortedCanvasItems = async (req, res) => {
         break;
     }       
 
-    res.status(200).json(sortedCanvasItems);
+    res.status(200).json({
+      success: true,
+      sort: req.query.sort,
+      message: '우선순위별 카드 조회 성공',
+      data: sortedCanvasItems
+    });
 
   } catch (error) {
     res.status(500).json({
