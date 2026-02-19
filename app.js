@@ -41,7 +41,11 @@ sequelize.sync({ force: false })
 console.log('[swagger] typeof specs:', typeof specs);
 console.log('[swagger] openapi:', specs && specs.openapi, 'keys:', specs && Object.keys(specs));
 
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:3000"],
+  credentials: true,
+  exposedHeaders: ["Authorization"], 
+}));
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
