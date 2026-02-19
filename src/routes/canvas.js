@@ -189,27 +189,29 @@ router.post('/canvas', authenticateJWTtoken, setCanvasItems);
  *               properties:
  *                 priorities:
  *                   type: array
- *                   items:
+ *                   data:
  *                     type: object
  *                     properties:
  *                       priorityLevel:
  *                         type: integer
- *                         example: 1
  *                       cardIds:
  *                         type: array
  *                         items:
  *                           type: integer
- *                         example: [1, 2]
  *             example:
- *               priorities:
+ *               success: true
+ *               sort: "salary"
+ *               message: "우선순위별 카드 조회 성공"
+ *               data:
  *                 - priorityLevel: 1
- *                   daysLeft: 2
- *                   cardIds: [1, 2]
+ *                   cardIds: [4, 5]
+ *                 - priorityLevel: 2
+ *                   cardIds: [6]
  *       401:
  *         description: 인증되지 않은 사용자
  *       404:
  *         description: 카드 정보를 찾을 수 없음
  */
-router.get('/canvas/sorted', authenticateJWTtoken, getSortedCanvasItems);
+router.get('/canvas/sorted', getSortedCanvasItems);
 
 module.exports = router;
