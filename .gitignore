@@ -39,4 +39,4 @@ uploads
 node_modules
 config/config.json
 
-firebase-server-account.json
+firebase-service-account.json
