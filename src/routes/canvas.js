@@ -6,7 +6,7 @@
  */
 
 const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
-const { getCanvasItems, getSortedCanvasItems } = require('../controllers/canvasController');
+const { getCanvasItems, setCanvasItems, getSortedCanvasItems } = require('../controllers/canvasController');
 const express = require('express');
 const router = express.Router();
 
@@ -88,7 +88,65 @@ const router = express.Router();
  *       404:
  *         description: 카드 정보를 찾을 수 없음
  */
-router.get('/canvas', authenticateJWTtoken, getCanvasItems);
+router.get('/canvas', getCanvasItems);
+
+/**
+ * @swagger
+ * /api/canvas:
+ *   post:
+ *     summary: 캔버스 아이템 위치 업데이트
+ *     description: 특정 카드의 캔버스 내 x, y 좌표를 업데이트합니다.
+ *     tags: [Canvas]
+ *     security:
+ *       - Authorization: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - cardId
+ *               - x
+ *               - y
+ *             properties:
+ *               cardId:
+ *                 type: integer
+ *                 description: 업데이트할 카드의 ID
+ *                 example: 4
+ *               x:
+ *                 type: number
+ *                 format: float
+ *                 description: 이동할 X 좌표
+ *                 example: 23.456
+ *               y:
+ *                 type: number
+ *                 format: float
+ *                 description: 이동할 Y 좌표
+ *                 example: 45.567
+ *     responses:
+ *       200:
+ *         description: 업데이트 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 cardId:
+ *                   type: integer
+ *                   example: 1
+ *       401:
+ *         description: 인증 실패 (토큰 누락 또는 만료)
+ *       404:
+ *         description: 해당 카드를 찾을 수 없음
+ *       500:
+ *         description: 서버 오류
+ */
+router.post('/canvas', setCanvasItems);
+
 
 /**
  * @swagger
@@ -139,6 +197,6 @@ router.get('/canvas', authenticateJWTtoken, getCanvasItems);
  *       404:
  *         description: 카드 정보를 찾을 수 없음
  */
-//router.get('/canvas/sorted', authenticateJWTtoken, getSortedCanvasItems);
+// router.get('/canvas/sorted', getSortedCanvasItems);
 
 module.exports = router;

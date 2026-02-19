@@ -31,6 +31,21 @@ exports.getCanvasItems = async (userId) => {
   }
   return result;
 };
+exports.setCanvasItems = async (userId, cardId, x, y) => {
+  const [card] = await job_cards.sequelize.query(
+    `SELECT * FROM job_cards WHERE id = ${cardId} AND userId = ${userId}`
+  );
+  if (!card) {
+    return { success: false, message: '카드를 찾을 수 없습니다.' };
+  }
+  
+  // 좌표 업데이트
+  await canvas_items.sequelize.query(
+    `UPDATE canvas_items SET canvas_x = ${x}, canvas_y = ${y} WHERE cardId = ${cardId}`
+  );
+
+  return { success: true, cardId };
+};
 
 async function findItemsByUserId(userId) {
   return await job_cards.findAll({
