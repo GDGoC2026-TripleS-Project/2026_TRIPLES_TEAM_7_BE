@@ -54,4 +54,3 @@ Object.keys(db).forEach((modelName) => {
 
 module.exports = db;
 
-
