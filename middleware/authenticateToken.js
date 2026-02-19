@@ -12,7 +12,7 @@ const authenticateJWTtoken = async (req, res, next) => {
     console.log(`[JWT Middleware] 토큰에서 추출된 UID:`, decodedUID);
 
     const user = await User.findOne({
-      where: { firebase_uid: decodedUID.firebase_uid }
+      where: { firebase_uid: decodedUID }
     });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -20,9 +20,8 @@ const authenticateJWTtoken = async (req, res, next) => {
 
     req.user = user;
 
-    res.setHeader('Authorization', 'Bearer ' + req.user.customToken);
+    res.setHeader('Authorization', 'Bearer ' + jwtToken);
     console.log(`[JWT Middleware] 사용자 정보 설정 완료:`, req.user);
-    
     next();
   } catch (error) {
     return res.status(403).json({ error: 'Invalid token' });
