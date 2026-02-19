@@ -1,6 +1,7 @@
 const job_cards = require('../models/job_cards/job_cards');
 const canvas_items = require('../models/job_cards/canvas_items');
 const match_percent = require('../models/matching/match_percent');
+const dayjs = require('dayjs');
 
 exports.getCanvasItems = async (userId) => {
   const items = await findItemsByUserId(userId);
@@ -66,6 +67,42 @@ exports.setCanvasItems = async (userId, cardId, x, y) => {
   };
 };
 
+exports.getSortedCanvasItemsbyDeadline = async (userId) => {
+  const items = await findItemsByUserId(userId);
+
+  console.log('userid: ', userId);
+
+  const sorted = items.sort((a, b) => {
+    if (!a.deadlineAt && !b.deadlineAt) return 0;
+    if (!a.deadlineAt) return 1;
+    if (!b.deadlineAt) return -1;
+    return new Date(a.deadlineAt) - new Date(b.deadlineAt);
+  });
+  
+  // 같은 deadlineAt끼리 묶기
+  const grouped = {};
+  sorted.forEach((item) => {
+    const deadline = item.deadlineAt ? dayjs(item.deadlineAt).format('YYYY-MM-DD') : 'null';
+    if (!grouped[deadline]) grouped[deadline] = [];
+    grouped[deadline].push(item);
+  });
+  
+  // 결과 변환
+  const result = Object.entries(grouped).map(([deadline, cards], idx) => {
+    let daysLeft = null;
+    if (deadline !== 'null') {
+      daysLeft = dayjs(deadline).diff(dayjs(), 'day');
+    }
+    
+    return {
+      priorityLevel: idx + 1,
+      daysLeft, cardIds: cards.map((c) => c.id)
+    };
+  });
+  return result;
+
+};
+
 async function findItemsByUserId(userId) {
   return await job_cards.findAll({
     where: {
@@ -73,3 +110,4 @@ async function findItemsByUserId(userId) {
     }
   });
 }
+
