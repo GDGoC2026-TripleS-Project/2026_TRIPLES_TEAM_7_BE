@@ -23,7 +23,7 @@ exports.login = async (req, res, next) => {
             console.log('Existing user');
         }
 
-        const customToken = jwt.sign({ firebase_uid: uid }, ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+        const customToken = jwt.sign({ firebase_uid: uid }, ACCESS_TOKEN_SECRET, { expiresIn: '1d' });
         const refreshCustomToken = jwt.sign({ firebase_uid: uid }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
 
         res.setHeader('Authorization', 'Bearer ' + customToken);
