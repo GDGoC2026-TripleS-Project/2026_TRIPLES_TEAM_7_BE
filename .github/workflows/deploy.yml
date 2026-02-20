@@ -41,15 +41,14 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             cd /home/ubuntu/deploy
-            
-            # 기존 컨테이너 중지 및 삭제
-            sudo docker stop node-app
-            sudo docker rm node-app
-            
-            sudo docker rmi node-backend
 
             # 압축 파일로부터 이미지 로드
             sudo docker load < node-backend.tar.gz
+            
+            # 기존 컨테이너 중지 및 삭제
+            sudo docker stop node-app || true
+            sudo docker rm node-app || true
+            
             
             # 새 컨테이너 실행 (80포트로 접속하면 8080번 노드 서버로 연결)
             sudo docker run -d --name node-app \
