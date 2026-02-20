@@ -481,6 +481,96 @@ async function getAllGapChecklistsByUserWithCardSummary(userId, { sort = 'recent
   return rows;
 }
 
+// ✅ matchId 1개에 대한 all-with-card "단일 그룹" 반환
+async function getGapChecklistsByMatchIdWithCardSummary(matchId, userId) {
+  // 1) match 존재 + 소유권 체크
+  const matchRow = await db.match_percent.findByPk(matchId, {
+    attributes: ['id', 'cardId', 'matchPercent', 'createdAt', 'seenAt'],
+  });
+  if (!matchRow) return { isSuccess: false, code: 'MATCH-404', message: 'match not found' };
+
+  const cardRow = await db.job_cards.findOne({
+    where: { id: matchRow.cardId, userId },
+    attributes: ['id', 'jobTitle', 'companyName', 'employmentType', 'deadlineAt'],
+  });
+  if (!cardRow) return { isSuccess: false, code: 'AUTH-403', message: 'Forbidden' };
+
+  // 2) 해당 matchId의 GAP 결과만
+  const gapResults = await db.match_result.findAll({
+    where: { matchId, userId, cardStatus: 'GAP' },
+    order: [['id', 'ASC']],
+  });
+  if (gapResults.length === 0) {
+    // 정책 선택:
+    // - 404로 할지
+    // - 200 + 빈 gapResults로 할지
+    return { isSuccess: false, code: 'GAP-404', message: 'gap results not found' };
+  }
+
+  const gapResultIds = gapResults.map(r => r.id);
+
+  // 3) checklist들
+  const checklists = await db.improve_checklist.findAll({
+    where: { matchResultId: { [Op.in]: gapResultIds } },
+    order: [['matchResultId', 'ASC'], ['id', 'ASC']],
+  });
+
+  const checklistByResultId = new Map();
+  for (const c of checklists) {
+    if (!checklistByResultId.has(c.matchResultId)) checklistByResultId.set(c.matchResultId, []);
+    checklistByResultId.get(c.matchResultId).push({
+      checklistId: c.id,
+      checkListText: c.checkListText,
+      isButtonActive: Boolean(c.isButtonActive),
+    });
+  }
+
+  // 4) 응답 조립 (정렬 없음: DB order 그대로)
+  const seenAt = matchRow.seenAt ?? null;
+
+  let totalChecklists = 0;
+  let completedChecklists = 0;
+
+  const gapResultsPayload = gapResults.map(r => {
+    const list = checklistByResultId.get(r.id) || [];
+    totalChecklists += list.length;
+    completedChecklists += list.filter(x => x.isButtonActive).length;
+
+    return {
+      matchResultId: r.id,
+      cardStatus: r.cardStatus,
+      comment: r.matchResultComment ?? r.matchResultTitle,
+      isRequired: Boolean(r.isRequired),
+      keywords: Array.isArray(r.gapKeywords) ? r.gapKeywords : [],
+      checklists: list,
+    };
+  });
+
+  return {
+    isSuccess: true,
+    code: 'SUCCESS-200',
+    message: 'OK',
+    data: {
+      matchId: matchRow.id,
+      createdAt: matchRow.createdAt ?? null,
+      seenAt,
+      isNew: !seenAt,
+      totalChecklists,
+      completedChecklists,
+      cardSummary: {
+        cardId: matchRow.cardId ?? null,
+        jobTitle: cardRow.jobTitle ?? null,
+        companyName: cardRow.companyName ?? null,
+        employmentType: cardRow.employmentType ?? null,
+        matchPercent: matchRow.matchPercent ?? null,
+        deadlineAt: cardRow.deadlineAt ?? null,
+      },
+      gapResults: gapResultsPayload,
+    },
+  };
+}
+
+
 
 
 module.exports = {
@@ -491,4 +581,5 @@ module.exports = {
   getResumePopupTrigger,
   markMatchChecklistsSeen,
   getAllGapChecklistsByUserWithCardSummary,
+  getGapChecklistsByMatchIdWithCardSummary,
 };
