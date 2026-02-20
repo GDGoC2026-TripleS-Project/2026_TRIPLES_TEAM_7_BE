@@ -173,7 +173,7 @@ router.patch('/user/resume', authenticateJWTtoken, upload.single('resume'), upda
  *        404:
  *          description: 유저를 찾을 수 없음
  */
-router.get('/user/mypage', userInfo);
+router.get('/user/mypage', authenticateJWTtoken, userInfo);
 
 /**
  * @swagger
@@ -203,7 +203,7 @@ router.get('/user/mypage', userInfo);
  *        404:
  *          description: 유저를 찾을 수 없음
  */
-router.get('/user/account', userAccount);
+router.get('/user/account', authenticateJWTtoken, userAccount);
 
 
 module.exports = router;
