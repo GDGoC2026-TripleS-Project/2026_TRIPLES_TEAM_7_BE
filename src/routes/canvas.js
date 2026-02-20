@@ -52,8 +52,8 @@ const router = express.Router();
  *                         type: array
  *                         items:
  *                           type: string
- *                       isAnalyzed:
- *                         type: boolean
+ *                       matchPercent:
+ *                         type: integer
  *                   x:
  *                     type: number
  *                   y:
@@ -68,7 +68,7 @@ const router = express.Router();
  *                   employmentType: FULL_TIME
  *                   roleText: "대규모 트래픽 API 설계 및 운영\nSpring기반 서버 개발 및 유지보수"
  *                   necessaryStack: ["Java", "Spring", "RDS경험"]
- *                   isAnalyzed: false
+ *                   matchPercent: 85
  *                 x: 85.5
  *                 y: 20
  *               - cardId: "2"
@@ -80,7 +80,7 @@ const router = express.Router();
  *                   employmentType: CONTRACT
  *                   roleText: "Node.js 기반 백엔드 API 개발"
  *                   necessaryStack: ["Node.js", "MySQL"]
- *                   isAnalyzed: true
+ *                   matchPercent: 85
  *                 x: 150
  *                 y: 45
  *       401:

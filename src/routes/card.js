@@ -231,7 +231,6 @@ router.delete('/card/delete/:cardId', authenticateJWTtoken, cardController.delet
  *         schema:
  *           type: integer
  *         description: 조회할 카드 ID
- *
  *     responses:
  *       200:
  *         description: 카드 세부 정보 조회 성공
@@ -354,6 +353,10 @@ router.delete('/card/delete/:cardId', authenticateJWTtoken, cardController.delet
  *                       format: date-time
  *                       description: 카드 생성일
  *                       example: 2026-02-17T12:00:00.000Z
+ *                     matchPercent:
+ *                       type: integer
+ *                       description: 매치율
+ *                       example: 52
  *
  *       400:
  *         description: cardId 누락
