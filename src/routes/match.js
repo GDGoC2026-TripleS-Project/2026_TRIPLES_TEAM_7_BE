@@ -13,10 +13,131 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
 
 /**
  * @swagger
+ * components:
+ *   schemas:
+ *     MatchJobInfoRequest:src/models/matching/match_percent.js
+ *       type: object
+ *       required:
+ *         - jobTitle
+ *         - companyName
+ *         - employmentType
+ *         - roleText
+ *         - necessaryStack
+ *         - preferStack
+ *         - experienceLevel
+ *         - salaryText
+ *         - workDay
+ *         - locationText
+ *         - deadlineAt
+ *       properties:
+ *         jobTitle:
+ *           type: string
+ *           example: 웹 프론트엔드 개발자
+ *         companyName:
+ *           type: string
+ *           example: 카카오모빌리티
+ *         employmentType:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["FULL_TIME"]
+ *         roleText:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example:
+ *             - TypeScript와 React/Next.js 기반의 카카오 T, 카카오내비 웹뷰 및 웹 서비스 아키텍처 설계 및 개발을 담당합니다.
+ *         necessaryStack:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["TypeScript","React","JavaScript","웹 개발","Front-end 개발","비동기 처리"]
+ *         preferStack:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["AI 기술","Back-end","DevOps","클라우드 시스템","웹 접근성","디자인 시스템"]
+ *         experienceLevel:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["경력직"]
+ *         salaryText:
+ *           type: string
+ *           example: 회사 내규에 따름
+ *         workDay:
+ *           type: string
+ *           example: ""
+ *         locationText:
+ *           type: string
+ *           example: 경기 성남시 분당구 판교역로 152 카카오모빌리티
+ *         deadlineAt:
+ *           type: string
+ *           format: date-time
+ *           example: 2026-02-04T23:59:59.000Z
+ *
+ *     MatchTopItem:
+ *       type: object
+ *       properties:
+ *         matchResultId:
+ *           type: integer
+ *           example: 55
+ *         comment:
+ *           type: string
+ *           example: React실무 경험
+ *
+ *     MatchGapItem:
+ *       type: object
+ *       properties:
+ *         matchResultId:
+ *           type: integer
+ *           example: 58
+ *         comment:
+ *           type: string
+ *           example: TypeScript 사용경험
+ *         isRequired:
+ *           type: boolean
+ *           example: true
+ *
+ *     MatchCreateResponse:
+ *       type: object
+ *       properties:
+ *         matchId:
+ *           type: integer
+ *           example: 6
+ *         matchPercent:
+ *           type: integer
+ *           example: 72
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           example: 2026-02-09T08:34:29.287Z
+ *         sourceFileUrl:
+ *           type: string
+ *           example: https://.../resume.pdf
+ *         strengthTop3:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/MatchTopItem'
+ *         gapTop3:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/MatchGapItem'
+ *         riskTop3:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/MatchTopItem'
+ *         canCreateChecklist:
+ *           type: boolean
+ *           example: true
+ */
+
+/**
+ * @swagger
  * /api/cards/{cardId}/match:
  *   post:
  *     summary: AI 매칭 생성
- *     description: 이력서 파일 URL을 기반으로 AI 매칭을 생성하고 결과를 저장합니다.
+ *     description: 이력서 PDF URL(fileUrl)과 공고 정보(jobInfo)를 기반으로 AI 매칭을 생성하고 결과를 저장/반환합니다.
  *     tags: [Match]
  *     security:
  *       - Authorization: []
@@ -35,35 +156,34 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  *             type: object
  *             required:
  *               - fileUrl
+ *               - jobInfo
  *             properties:
  *               fileUrl:
  *                 type: string
- *                 example: https://example.com/resume.pdf
+ *                 description: 이력서 PDF URL
+ *                 example: https://drive.google.com/uc?export=download&id=1PuuMEZtAQZiLUsyxDQ0wJaB6gweLClGb
+ *               jobInfo:
+ *                 $ref: '#/components/schemas/MatchJobInfoRequest'
  *     responses:
  *       200:
  *         description: 매칭 성공
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 matchId:
- *                   type: integer
- *                   example: 12
- *                 matchPercent:
- *                   type: integer
- *                   example: 72
+ *               $ref: '#/components/schemas/MatchCreateResponse'
  *       400:
  *         description: 잘못된 요청
  *       401:
  *         description: JWT 인증 실패 (토큰 누락/만료/위조)
  */
+
 router.post('/cards/:cardId/match', authenticateJWTtoken, async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const userId = Number(req.user?.id);
     const cardId = Number(req.params.cardId);
-    const { fileUrl } = req.body;
+    const { fileUrl, jobInfo } = req.body;
 
+    // 먼저 검증
     if (!userId || Number.isNaN(userId)) {
       return res.status(400).json({ ok: false, message: 'userId is required' });
     }
@@ -74,7 +194,8 @@ router.post('/cards/:cardId/match', authenticateJWTtoken, async (req, res, next)
       return res.status(400).json({ ok: false, message: 'fileUrl is required' });
     }
 
-    const result = await matchService.createMatchAndSave({ userId, cardId, fileUrl });
+    // 그 다음 서비스 호출 (result는 1번만 선언)
+    const result = await matchService.createMatchAndSave({ userId, cardId, fileUrl, jobInfo });
     return res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -103,18 +224,7 @@ router.post('/cards/:cardId/match', authenticateJWTtoken, async (req, res, next)
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 matchId:
- *                   type: integer
- *                   example: 12
- *                 matchPercent:
- *                   type: integer
- *                   example: 72
- *                 createdAt:
- *                   type: string
- *                   format: date-time
- *                   example: 2026-02-09T10:20:50.000Z
+ *               $ref: '#/components/schemas/MatchCreateResponse'
  *       400:
  *         description: 잘못된 요청
  *       401:
@@ -138,5 +248,7 @@ router.get('/cards/:cardId/match', authenticateJWTtoken, async (req, res, next) 
     next(err);
   }
 });
+
+
 
 module.exports = router;
