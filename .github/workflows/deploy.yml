@@ -42,12 +42,14 @@ jobs:
           script: |
             cd /home/ubuntu/deploy
             
-            # 압축 파일로부터 이미지 로드
-            sudo docker load < node-backend.tar.gz
-            
             # 기존 컨테이너 중지 및 삭제
             sudo docker stop node-app
             sudo docker rm node-app
+            
+            sudo docker rmi node-backend
+
+            # 압축 파일로부터 이미지 로드
+            sudo docker load < node-backend.tar.gz
             
             # 새 컨테이너 실행 (80포트로 접속하면 8080번 노드 서버로 연결)
             sudo docker run -d --name node-app \
@@ -55,9 +57,6 @@ jobs:
               -v /home/ubuntu/deploy/.env:/app/.env \
               -v /home/ubuntu/deploy/firebase-service-account.json:/app/firebase-service-account.json \
               node-backend
-
-            echo "--- 주입된 환경변수 목록 (일부) ---"
-            sudo docker inspect node-app | grep -A 20 "Env"
             
             # 전송받은 압축 파일 삭제 (용량 확보)
             rm node-backend.tar.gz
