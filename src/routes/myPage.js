@@ -162,12 +162,21 @@ router.patch('/user/resume', authenticateJWTtoken, upload.single('resume'), upda
  *              schema:
  *                type: object
  *                properties:
- *                  address:
+ *                  success:
+ *                    type: boolean
+ *                    example: true
+ *                  message:
  *                    type: string
- *                    example: "서울특별시 강남구..."
- *                  resumeUrl:
- *                    type: string
- *                    example: "https://example.com/resume.pdf"
+ *                    example: "사용자의 address와 resumeUrl 정보 반환이 완료되었습니다."
+ *                  result:
+ *                    type: object
+ *                    properties:
+ *                      address:
+ *                          type: string
+ *                          example: "사용자 정보 조회 성공"
+ *                      resumeUrl:
+ *                          type: string
+ *                          example: "https://example.com/file1.pdf"
  *        401:
  *          description: 인증되지 않은 사용자
  *        404:
@@ -192,12 +201,21 @@ router.get('/user/mypage', authenticateJWTtoken, userInfo);
  *              schema:
  *                type: object
  *                properties:
- *                  username:
+ *                  success:
+ *                    type: boolean
+ *                    example: true
+ *                  message:
  *                    type: string
- *                    example: "홍길동"
- *                  email:
- *                    type: string
- *                    example: "hong@example.com"
+ *                    example: "사용자의 username과 email 정보 반환이 완료되었습니다."
+ *                  result:
+ *                    type: object
+ *                    properties:
+ *                      username:
+ *                          type: string
+ *                          example: "홍길동"
+ *                      email:
+ *                          type: string
+ *                          example: "hong@example.com"
  *        401:
  *          description: 인증되지 않은 사용자
  *        404:

@@ -51,9 +51,11 @@ exports.userInfo = async (req, res, next) => {
     try {
         const userId = req.user.id;
 
-        const user = User.findByPk(userId, {
+        const user = await User.findByPk(userId, {
             attributes: ['address']
         });
+
+        console.log(user);
         
         if (!user) {
             return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
@@ -68,8 +70,8 @@ exports.userInfo = async (req, res, next) => {
             success: true,
             message: "사용자 정보 조회 성공",
             data: {
-                address: user ?  user.address : null,
-                fileUrl: resume ? resume.fileUrl : null
+                address: user ? user.address : null,
+                resumeUrl: resume ? resume.fileUrl : null
             }
         });
     } catch (error) {
@@ -81,7 +83,7 @@ exports.userAccount = async (req, res, next) => {
     try {
         const userId = req.user.id;
 
-        const user = User.findByPk(userId, {
+        const user = await User.findByPk(userId, {
             // 요청하신 3가지 정보만 선택하여 리턴
             attributes: ['username', 'email']
         });
