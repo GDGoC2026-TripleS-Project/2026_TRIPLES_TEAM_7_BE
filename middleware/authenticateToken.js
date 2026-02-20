@@ -11,12 +11,23 @@ const authenticateJWTtoken = async (req, res, next) => {
     const decodedUID = jwt.verify(jwtToken, process.env.ACCESS_TOKEN_SECRET);
     console.log(`[JWT Middleware] 토큰에서 추출된 UID:`, decodedUID);
 
-    const user = await User.findOne({
-      where: { firebase_uid: decodedUID }
-    });
+    const [user] = await User.sequelize.query(
+        `SELECT *
+        FROM users
+        WHERE firebase_uid = :firebase_uid
+        LIMIT 1`,
+      {
+        replacements: { firebase_uid: decodedUID },
+        type: User.sequelize.QueryTypes.SELECT
+      }
+    );
+
+    console.log(user);
+
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
+    console.log('user');
 
     req.user = user;
 
