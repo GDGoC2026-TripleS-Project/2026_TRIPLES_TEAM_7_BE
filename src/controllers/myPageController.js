@@ -1,4 +1,6 @@
 const myPageService = require('../services/myPageService');
+const User = require('../models/users/user');
+const Resume = require('../models/users/resumes');
 
 exports.updateAddress = async (req, res) => {
     try {
@@ -49,19 +51,26 @@ exports.userInfo = async (req, res, next) => {
     try {
         const userId = req.user.id;
 
-        const result = User.findByPk(userId, {
-            // 요청하신 3가지 정보만 선택하여 리턴
-            attributes: ['address', 'resumeUrl']
+        const user = User.findByPk(userId, {
+            attributes: ['address']
         });
         
-        if (!result) {
+        if (!user) {
             return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
         }
-        
+
+        const resume = await Resume.findOne({
+            where: { userId },
+            attributes: ['fileUrl']
+        });
+
         return res.status(200).json({
             success: true,
             message: "사용자 정보 조회 성공",
-            data: result
+            data: {
+                address: user ?  user.address : null,
+                fileUrl: resume ? resume.fileUrl : null
+            }
         });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
@@ -72,19 +81,22 @@ exports.userAccount = async (req, res, next) => {
     try {
         const userId = req.user.id;
 
-        const result = User.findByPk(userId, {
+        const user = User.findByPk(userId, {
             // 요청하신 3가지 정보만 선택하여 리턴
-            attributes: ['address', 'resumeUrl']
+            attributes: ['username', 'email']
         });
         
-        if (!result) {
+        if (!user) {
             return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
         }
 
         return res.status(200).json({
             success: true,
             message: "사용자 정보 조회 성공",
-            data: result
+            data: {
+                username: user ?  user.username : null,
+                email: user ?  user.email : null
+            }
         });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
