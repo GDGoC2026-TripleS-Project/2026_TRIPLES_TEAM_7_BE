@@ -49,10 +49,10 @@ jobs:
             cd /home/ubuntu/deploy
             
             # Docker Hub에서 새 이미지 pull
-            sudo docker compose pull
+            sudo docker-compose pull
             
             # 컨테이너 재시작 (변경사항이 있는 서비스만 새로 띄움)
-            sudo docker compose up -d
+            sudo docker-compose up -d
             
             # 오래된 이미지들 정리
             sudo docker image prune -f
