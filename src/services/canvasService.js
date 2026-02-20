@@ -2,6 +2,7 @@ const job_cards = require('../models/job_cards/job_cards');
 const canvas_items = require('../models/job_cards/canvas_items');
 const match_percent = require('../models/matching/match_percent');
 const User = require('../models/users/user');
+const { QueryTypes } = require('sequelize');
 const dayjs = require('dayjs');
 const geolib = require('geolib');
 
@@ -24,6 +25,9 @@ exports.getCanvasItems = async (userId) => {
         item.dataValues.matchPercent = matchPercentRows[0].matchPercent;
       }
 
+      console.log(item.dataValues.matchPercent);
+
+
 
       match_percent
       result.push({ 
@@ -38,7 +42,7 @@ exports.getCanvasItems = async (userId) => {
               employmentType: item.employmentType,
               roleText: item.roleText,
               necessaryStack: item.necessaryStack,
-              isAnalyzed: item.dataValues.matchPercent !== undefined ? item.dataValues.matchPercent > 0 : false
+              matchPercent: item.dataValues.matchPercent ? item.dataValues.matchPercent : null
             }
           : null,
       });

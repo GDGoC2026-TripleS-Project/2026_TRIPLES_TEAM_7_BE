@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { job_cards, job_posts, canvas_items, sequelize } = require('../models');
+const { job_cards, job_posts, canvas_items, sequelize, match_percent } = require('../models');
 const convertAndProcessLocation = require('./mapService');
 
 exports.analyzeJob = async (url) => {
@@ -155,11 +155,21 @@ exports.getCard = async ({ userId, cardId }) => {
     });
 
     if (!card) {
-    const error = new Error('카드가 존재하지 않습니다.');
-    error.status = 404;
-    error.code = 'CARD-404';
-    throw error;
-}
+        const error = new Error('카드가 존재하지 않습니다.');
+        error.status = 404;
+        error.code = 'CARD-404';
+        throw error;
+    }
+
+    const result = await match_percent.findOne({
+        where: { cardId: cardId }
+    });
+
+    console.log(result);
+
+    const matchPercent = result.dataValues.matchPercent;
+    console.log(matchPercent);
+
 
     return {
         id: card.id,
@@ -184,6 +194,7 @@ exports.getCard = async ({ userId, cardId }) => {
             }
             : null,
         cardStatus: card.cardStatus,
-        createdAt: card.createdAt
+        createdAt: card.createdAt,
+        matchPercent: matchPercent ? matchPercent : null
     };
 };
