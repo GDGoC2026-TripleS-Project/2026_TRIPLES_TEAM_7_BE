@@ -43,6 +43,10 @@ module.exports = class match_result extends Sequelize.Model {
         allowNull: false, 
         defaultValue: false 
       },
+      gapKeywords: {
+        type: Sequelize.JSON,
+        allowNull: true,
+      },
 
     }, {
       sequelize,

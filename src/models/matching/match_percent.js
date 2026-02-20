@@ -16,6 +16,10 @@ module.exports = class match_percent extends Sequelize.Model {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
+      seenAt: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
     }, {
       sequelize,
       timestamps: true,
