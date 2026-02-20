@@ -61,4 +61,4 @@ jobs:
             rm node-backend.tar.gz
             
             # 오래된 이미지들 정리
-            sudo docker image prune -a -f
+            sudo docker image prune -f
