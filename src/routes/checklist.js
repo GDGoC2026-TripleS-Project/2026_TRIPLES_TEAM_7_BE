@@ -9,38 +9,32 @@
  * @swagger
  * components:
  *   schemas:
- *     BaseResponse:
+ *     CardSummary:
  *       type: object
  *       properties:
- *         isSuccess:
- *           type: boolean
- *         code:
- *           type: string
- *         message:
- *           type: string
- *         data:
- *           nullable: true
- *
- *     ErrorResponse:
- *       type: object
- *       properties:
- *         isSuccess:
- *           type: boolean
- *           example: false
- *         code:
- *           type: string
- *           example: AUTH-401
- *         message:
- *           type: string
- *           example: JWT 인증 실패
- *
- *     MarkSeenResponseData:
- *       type: object
- *       properties:
- *         updated:
+ *         cardId:
  *           type: integer
- *           description: match_percent.seenAt이 null이었던 경우 1, 이미 읽음이면 0
- *           example: 1
+ *           example: 5
+ *         jobTitle:
+ *           type: string
+ *           example: 웹 프론트엔드 개발자
+ *         companyName:
+ *           type: string
+ *           example: 카카오모빌리티
+ *         employmentType:
+ *           type: string
+ *           enum: [FULL_TIME, CONTRACT, INTERN]
+ *           example: FULL_TIME
+ *         matchPercent:
+ *           type: integer
+ *           description: 매치율(%)
+ *           example: 72
+ *         deadlineAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *           description: 모집 공고 마감일(정렬용). 없으면 null
+ *           example: 2026-03-01T14:59:59.000Z
  *
  *     ChecklistItem:
  *       type: object
@@ -55,7 +49,7 @@
  *           type: boolean
  *           example: false
  *
- *     GapResultItem:
+ *     GapResultItemWithCard:
  *       type: object
  *       properties:
  *         matchResultId:
@@ -71,64 +65,18 @@
  *         isRequired:
  *           type: boolean
  *           example: true
- *         checklists:
+ *         keywords:
  *           type: array
+ *           description: GAP 키워드(2~5개)
  *           items:
- *             $ref: '#/components/schemas/ChecklistItem'
- *         keywords:
- *          type: array
- *          description: GAP 키워드(2~5개)
- *          items:
- *            type: string
- *          example: ["TypeScript", "타입 안정성", "strict"]
- *
- *     MatchResultStrengthOrRiskItem:
- *       type: object
- *       properties:
- *         matchResultId:
- *           type: integer
- *           example: 55
- *         cardStatus:
- *           type: string
- *           enum: [STRENGTH, RISK]
- *           example: STRENGTH
- *         comment:
- *           type: string
- *           example: React실무 경험
- *         keywords:
- *          type: array
- *          description: GAP 키워드(2~5개)
- *          items:
- *            type: string
- *          example: ["TypeScript", "타입 안정성", "strict"]
- *
- *     MatchResultGapItem:
- *       type: object
- *       properties:
- *         matchResultId:
- *           type: integer
- *           example: 58
- *         cardStatus:
- *           type: string
- *           enum: [GAP]
- *           example: GAP
- *         comment:
- *           type: string
- *           example: TypeScript 사용경험
- *         isRequired:
- *           type: boolean
- *           example: true
+ *             type: string
+ *           example: ["TypeScript", "정적 타이핑", "Interface"]
  *         checklists:
  *           type: array
  *           items:
  *             $ref: '#/components/schemas/ChecklistItem'
  *
- *     MatchResultItem:
- *       oneOf:
- *         - $ref: '#/components/schemas/MatchResultStrengthOrRiskItem'
- *         - $ref: '#/components/schemas/MatchResultGapItem'
- *
- *     ChecklistsAllItem:
+ *     ChecklistsAllWithCardItem:
  *       type: object
  *       properties:
  *         matchId:
@@ -146,33 +94,20 @@
  *         isNew:
  *           type: boolean
  *           example: true
+ *         totalChecklists:
+ *           type: integer
+ *           description: 해당 match의 전체 체크리스트 개수
+ *           example: 9
+ *         completedChecklists:
+ *           type: integer
+ *           description: 해당 match의 완료된 체크리스트 개수
+ *           example: 1
+ *         cardSummary:
+ *           $ref: '#/components/schemas/CardSummary'
  *         gapResults:
  *           type: array
  *           items:
- *             $ref: '#/components/schemas/GapResultItem'
- *
- *     MatchChecklistsData:
- *       type: object
- *       properties:
- *         matchId:
- *           type: integer
- *           example: 13
- *         createdAt:
- *           type: string
- *           format: date-time
- *           example: 2026-02-20T10:10:27.000Z
- *         seenAt:
- *           type: string
- *           format: date-time
- *           nullable: true
- *           example: null
- *         isNew:
- *           type: boolean
- *           example: true
- *         matchResults:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/MatchResultItem'
+ *             $ref: '#/components/schemas/GapResultItemWithCard'
  */
 
 const express = require('express');
@@ -185,6 +120,7 @@ const {
   toggleChecklist,
   getResumePopupTrigger,
   markMatchChecklistsSeen,
+  getAllGapChecklistsByUserWithCardSummary,
 } = require('../services/checklistService');
 
 // -------------------------
@@ -419,6 +355,8 @@ router.get('/matches/:matchId/resume-popup-trigger', authenticateJWTtoken, async
   }
 });
 
+
+
 // -------------------------------------
 // PATCH /api/matches/:matchId/checklists/seen
 // -------------------------------------
@@ -485,5 +423,88 @@ router.patch('/matches/:matchId/checklists/seen', authenticateJWTtoken, async (r
     next(err);
   }
 });
+
+/**
+ * @swagger
+ * /api/checklists/all-with-card:
+ *   get:
+ *     summary: 모든 GAP 체크리스트 조회 + 카드 상단 요약 포함 (match 단위 그룹)
+ *     description: |
+ *       로그인 유저의 모든 GAP 체크리스트를 matchId(match_percent.id) 기준으로 묶어서 반환합니다.
+ *       각 match 그룹 상단에 카드 요약정보(jobTitle/companyName/employmentType/matchPercent/deadlineAt)를 함께 내려줍니다.
+ *       읽음(seenAt/isNew)은 match_percent 단위로만 제공합니다. (GAP/checklist 단위 제공 없음)
+ *       정렬은 query parameter(sort/order)로 제어합니다.
+ *     tags: [Checklists]
+ *     security:
+ *       - Authorization: []
+ *     parameters:
+ *       - in: query
+ *         name: sort
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [deadline, recent, incomplete]
+ *           default: recent
+ *         description: |
+ *           정렬 기준
+ *           - deadline: 모집 공고 순(마감 가까운 순)
+ *           - recent: 최근순(match createdAt 최신)
+ *           - incomplete: 미완료 순(남은 체크리스트 많은 순)
+ *         example: recent
+ *       - in: query
+ *         name: order
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *         description: |
+ *           정렬 방향
+ *           - deadline 기본값: asc
+ *           - recent 기본값: desc
+ *           - incomplete 기본값: desc
+ *         example: desc
+ *     responses:
+ *       200:
+ *         description: GAP 체크리스트 목록 반환 (카드 요약 포함)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/BaseResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/ChecklistsAllWithCardItem'
+ *       401:
+ *         description: JWT 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/checklists/all-with-card', authenticateJWTtoken, async (req, res, next) => {
+  try {
+      res.set('Cache-Control', 'no-store');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+
+    const userId = Number(req.user?.id);
+    if (!Number.isInteger(userId)) {
+      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'token required' });
+    }
+
+    const sort = (req.query.sort ?? 'recent').toString();  // deadline | recent | incomplete
+    const order = (req.query.order ?? '').toString();      // asc | desc (optional)
+
+    const data = await getAllGapChecklistsByUserWithCardSummary(userId, { sort, order });
+
+    return res.json({ isSuccess: true, code: 'SUCCESS-200', message: 'OK', data });
+  } catch (err) {
+    next(err);
+  }
+});
+
 
 module.exports = router;
