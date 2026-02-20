@@ -121,6 +121,7 @@ const {
   getResumePopupTrigger,
   markMatchChecklistsSeen,
   getAllGapChecklistsByUserWithCardSummary,
+  getGapChecklistsByMatchIdWithCardSummary,
 } = require('../services/checklistService');
 
 // -------------------------
@@ -506,5 +507,71 @@ router.get('/checklists/all-with-card', authenticateJWTtoken, async (req, res, n
   }
 });
 
+
+// -------------------------------------
+// GET /api/matches/:matchId/gap-checklists-with-card
+// -------------------------------------
+/**
+ * @swagger
+ * /api/matches/{matchId}/checklists-with-card:
+ *   get:
+ *     summary: 특정 matchId의 GAP 체크리스트 조회 + 카드 요약 포함 
+ *     description: |
+ *       로그인 유저의 특정 matchId(match_percent.id)에 해당하는 GAP 체크리스트만 반환합니다.
+ *       응답 포맷은 /api/checklists/all-with-card의 "단일 match 그룹"과 동일합니다.
+ *       읽음(seenAt/isNew)은 match_percent 단위로만 제공합니다.
+ *     tags: [Checklists]
+ *     security:
+ *       - Authorization: []
+ *     parameters:
+ *       - in: path
+ *         name: matchId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         example: 13
+ *     responses:
+ *       200:
+ *         description: 특정 match의 GAP 체크리스트 반환 (카드 요약 포함)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/BaseResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/ChecklistsAllWithCardItem'
+ *       400:
+ *         description: 잘못된 matchId
+ *       401:
+ *         description: JWT 인증 실패
+ *       403:
+ *         description: 권한 없음
+ *       404:
+ *         description: match 또는 GAP 결과 없음
+ */
+router.get('/matches/:matchId/checklists-with-card', authenticateJWTtoken, async (req, res, next) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
+    const userId = Number(req.user?.id);
+    if (!Number.isInteger(userId)) {
+      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'token required' });
+    }
+
+    const matchId = Number(req.params.matchId);
+    if (!Number.isInteger(matchId)) {
+      return res.status(400).json({ isSuccess: false, code: 'BAD_REQUEST', message: 'matchId must be integer' });
+    }
+
+    const result = await getGapChecklistsByMatchIdWithCardSummary(matchId, userId);
+    return res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
 
 module.exports = router;
