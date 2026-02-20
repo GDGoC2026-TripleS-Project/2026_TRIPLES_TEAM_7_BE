@@ -336,6 +336,243 @@ async function markMatchChecklistsSeen(matchId, userId) {
   return { isSuccess: true, code: 'SUCCESS-200', message: 'OK', data: { updated: 1 } };
 }
 
+/**
+ * cardSummary 포맷 통일
+ */
+// services/checklistService.js
+
+function buildCardSummary({ matchRow, cardRow }) {
+  return {
+    cardId: matchRow?.cardId ?? null,
+    jobTitle: cardRow?.jobTitle ?? null,
+    companyName: cardRow?.companyName ?? null,
+    employmentType: cardRow?.employmentType ?? null,
+    matchPercent: matchRow?.matchPercent ?? null,
+    deadlineAt: cardRow?.deadlineAt ?? null,
+  };
+}
+
+function toTime(v) {
+  const t = v ? new Date(v).getTime() : 0;
+  return Number.isFinite(t) ? t : 0;
+}
+
+async function getAllGapChecklistsByUserWithCardSummary(userId, { sort = 'recent', order = '' } = {}) {
+  const gapResults = await db.match_result.findAll({
+    where: { userId, cardStatus: 'GAP' },
+    order: [['matchId', 'DESC'], ['id', 'ASC']],
+  });
+  if (gapResults.length === 0) return [];
+
+  const matchResultIds = gapResults.map(r => r.id);
+  const matchIds = [...new Set(gapResults.map(r => r.matchId))];
+
+  const checklists = await db.improve_checklist.findAll({
+    where: { matchResultId: { [Op.in]: matchResultIds } },
+    order: [['matchResultId', 'ASC'], ['id', 'ASC']],
+  });
+
+  const matches = await db.match_percent.findAll({
+    where: { id: { [Op.in]: matchIds } },
+    attributes: ['id', 'cardId', 'matchPercent', 'createdAt', 'seenAt'],
+    order: [['createdAt', 'DESC']],
+  });
+
+  const matchById = new Map(matches.map(m => [Number(m.id), m]));
+  const cardIds = [...new Set(matches.map(m => Number(m.cardId)).filter(Boolean))];
+
+  // ✅ job_cards에서 공고요약 + jobPostId까지 가져오기(가정)
+  const cards = cardIds.length === 0
+    ? []
+    : await db.job_cards.findAll({
+        where: { id: { [Op.in]: cardIds }, userId },
+        attributes: ['id', 'jobTitle', 'companyName', 'employmentType', 'deadlineAt']
+      });
+
+  const cardById = new Map(cards.map(c => [Number(c.id), c]));
+
+  // checklist를 matchResultId로 묶기
+  const checklistByResultId = new Map();
+  for (const c of checklists) {
+    if (!checklistByResultId.has(c.matchResultId)) checklistByResultId.set(c.matchResultId, []);
+    checklistByResultId.get(c.matchResultId).push({
+      checklistId: c.id,
+      checkListText: c.checkListText,
+      isButtonActive: Boolean(c.isButtonActive),
+    });
+  }
+
+  // matchId 단위로 묶기
+  const resultByMatchId = new Map();
+
+  for (const r of gapResults) {
+    const matchRow = matchById.get(Number(r.matchId)) || null;
+    const cardRow = matchRow ? (cardById.get(Number(matchRow.cardId)) || null) : null;
+
+    if (!resultByMatchId.has(r.matchId)) {
+      const seenAt = matchRow?.seenAt ?? null;
+      resultByMatchId.set(r.matchId, {
+        matchId: r.matchId,
+        createdAt: matchRow?.createdAt ?? null,
+        seenAt,
+        isNew: !seenAt,
+        totalChecklists: 0,
+        completedChecklists: 0,
+        cardSummary: buildCardSummary({ matchRow, cardRow }),
+        gapResults: [],
+      });
+    }
+
+    const group = resultByMatchId.get(r.matchId);
+    const list = checklistByResultId.get(r.id) || [];
+    group.totalChecklists += list.length;
+    group.completedChecklists += list.filter(x => x.isButtonActive).length;
+
+    group.gapResults.push({
+      matchResultId: r.id,
+      cardStatus: r.cardStatus,
+      comment: r.matchResultComment ?? r.matchResultTitle,
+      isRequired: Boolean(r.isRequired),
+      keywords: Array.isArray(r.gapKeywords) ? r.gapKeywords : [],
+      checklists: list,
+    });
+  }
+
+  const rows = Array.from(resultByMatchId.values());
+
+  // ✅ 정렬
+  const normalizedSort = (sort || 'recent').toLowerCase();
+  const normalizedOrder = (order || '').toLowerCase();
+
+  if (normalizedSort === 'deadline') {
+    // 기본: 마감 가까운 순(asc). deadline 없는 건 맨 뒤.
+    const dir = normalizedOrder === 'desc' ? -1 : 1;
+    rows.sort((a, b) => {
+      const ta = toTime(a.cardSummary?.deadlineAt);
+      const tb = toTime(b.cardSummary?.deadlineAt);
+
+      // deadline 없는 경우 뒤로
+      const aHas = Boolean(a.cardSummary?.deadlineAt);
+      const bHas = Boolean(b.cardSummary?.deadlineAt);
+      if (aHas !== bHas) return aHas ? -1 : 1;
+
+      if (ta !== tb) return (ta - tb) * dir;
+
+      // tie-breaker: 최근순
+      return toTime(b.createdAt) - toTime(a.createdAt);
+    });
+  } else if (normalizedSort === 'incomplete') {
+    // 기본: 미완료(남은 개수) 많은 순 desc
+    const dir = normalizedOrder === 'asc' ? 1 : -1; // asc면 남은 적은 순
+    rows.sort((a, b) => {
+      const ra = (a.totalChecklists || 0) - (a.completedChecklists || 0);
+      const rb = (b.totalChecklists || 0) - (b.completedChecklists || 0);
+
+      if (ra !== rb) return (ra - rb) * dir;
+
+      // tie-breaker: 최근순
+      return toTime(b.createdAt) - toTime(a.createdAt);
+    });
+  } else {
+    const dir = normalizedOrder === 'asc' ? 1 : -1; // 기본 desc
+    rows.sort((a, b) => (toTime(a.createdAt) - toTime(b.createdAt)) * dir);
+  }
+
+  return rows;
+}
+
+// ✅ matchId 1개에 대한 all-with-card "단일 그룹" 반환
+async function getGapChecklistsByMatchIdWithCardSummary(matchId, userId) {
+  // 1) match 존재 + 소유권 체크
+  const matchRow = await db.match_percent.findByPk(matchId, {
+    attributes: ['id', 'cardId', 'matchPercent', 'createdAt', 'seenAt'],
+  });
+  if (!matchRow) return { isSuccess: false, code: 'MATCH-404', message: 'match not found' };
+
+  const cardRow = await db.job_cards.findOne({
+    where: { id: matchRow.cardId, userId },
+    attributes: ['id', 'jobTitle', 'companyName', 'employmentType', 'deadlineAt'],
+  });
+  if (!cardRow) return { isSuccess: false, code: 'AUTH-403', message: 'Forbidden' };
+
+  // 2) 해당 matchId의 GAP 결과만
+  const gapResults = await db.match_result.findAll({
+    where: { matchId, userId, cardStatus: 'GAP' },
+    order: [['id', 'ASC']],
+  });
+  if (gapResults.length === 0) {
+    // 정책 선택:
+    // - 404로 할지
+    // - 200 + 빈 gapResults로 할지
+    return { isSuccess: false, code: 'GAP-404', message: 'gap results not found' };
+  }
+
+  const gapResultIds = gapResults.map(r => r.id);
+
+  // 3) checklist들
+  const checklists = await db.improve_checklist.findAll({
+    where: { matchResultId: { [Op.in]: gapResultIds } },
+    order: [['matchResultId', 'ASC'], ['id', 'ASC']],
+  });
+
+  const checklistByResultId = new Map();
+  for (const c of checklists) {
+    if (!checklistByResultId.has(c.matchResultId)) checklistByResultId.set(c.matchResultId, []);
+    checklistByResultId.get(c.matchResultId).push({
+      checklistId: c.id,
+      checkListText: c.checkListText,
+      isButtonActive: Boolean(c.isButtonActive),
+    });
+  }
+
+  // 4) 응답 조립 (정렬 없음: DB order 그대로)
+  const seenAt = matchRow.seenAt ?? null;
+
+  let totalChecklists = 0;
+  let completedChecklists = 0;
+
+  const gapResultsPayload = gapResults.map(r => {
+    const list = checklistByResultId.get(r.id) || [];
+    totalChecklists += list.length;
+    completedChecklists += list.filter(x => x.isButtonActive).length;
+
+    return {
+      matchResultId: r.id,
+      cardStatus: r.cardStatus,
+      comment: r.matchResultComment ?? r.matchResultTitle,
+      isRequired: Boolean(r.isRequired),
+      keywords: Array.isArray(r.gapKeywords) ? r.gapKeywords : [],
+      checklists: list,
+    };
+  });
+
+  return {
+    isSuccess: true,
+    code: 'SUCCESS-200',
+    message: 'OK',
+    data: {
+      matchId: matchRow.id,
+      createdAt: matchRow.createdAt ?? null,
+      seenAt,
+      isNew: !seenAt,
+      totalChecklists,
+      completedChecklists,
+      cardSummary: {
+        cardId: matchRow.cardId ?? null,
+        jobTitle: cardRow.jobTitle ?? null,
+        companyName: cardRow.companyName ?? null,
+        employmentType: cardRow.employmentType ?? null,
+        matchPercent: matchRow.matchPercent ?? null,
+        deadlineAt: cardRow.deadlineAt ?? null,
+      },
+      gapResults: gapResultsPayload,
+    },
+  };
+}
+
+
+
+
 module.exports = {
   getAllGapChecklistsByUser,
   getMatchChecklists,
@@ -343,4 +580,6 @@ module.exports = {
   toggleChecklist,
   getResumePopupTrigger,
   markMatchChecklistsSeen,
+  getAllGapChecklistsByUserWithCardSummary,
+  getGapChecklistsByMatchIdWithCardSummary,
 };
