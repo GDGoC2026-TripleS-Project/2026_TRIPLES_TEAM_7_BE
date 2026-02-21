@@ -3,28 +3,64 @@ const db = require('../models');
 const { sequelize } = db;
 const checklistService = require('./checklistService'); // ✅ 자동 체크리스트 생성 호출용
 
-// TODO: 실제 AI 호출로 교체
-async function runMatchAI(payload) {
-  // return await realRunMatchAI(payload);
-  return {
-    matchPercent: 72,
-    strengthTop3: [
-      { comment: 'React실무 경험' },
-      { comment: '협업 기반 개발 경험' },
-      { comment: '포트폴리오 완성도 높음' },
-    ],
-    gapTop3: [
-      { comment: 'TypeScript 사용경험', isRequired: true },
-      { comment: '테스트 코드 작성 경험', isRequired: false },
-      { comment: '관련 자격증', isRequired: false },
-    ],
-    riskTop3: [
-      { comment: '조건 자체가 리스크' },
-      { comment: '경력 3년이상' },
-      { comment: '복수전공자 우대' },
-    ],
-  };
+const axios = require('axios');
+
+const AI_BASE_URL = process.env.AI_BASE_URL || 'http://52.78.20.212/fastapi';
+const AI_MATCH_PATH = process.env.AI_MATCH_PATH || '/match';
+const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 30000);
+
+function joinUrl(base, path) {
+  const b = String(base || '').replace(/\/+$/, '');
+  const p = String(path || '').replace(/^\/+/, '');
+  return `${b}/${p}`;
 }
+
+async function runMatchAI(payload) {
+  const endpoint = joinUrl(AI_BASE_URL, AI_MATCH_PATH);
+
+  // ✅ /match는 fileUrl + jobInfo
+  const body = {
+    fileUrl: payload.fileUrl,
+    jobInfo: payload.jobInfo,
+  };
+
+  let urlHost = null;
+  try { urlHost = new URL(body.fileUrl).host; } catch (_) {}
+
+  console.log('[AI CALL]', {
+    endpoint,
+    sendFileUrl: body.fileUrl,
+    sendFileUrlHost: urlHost,
+    jobTitle: body.jobInfo?.jobTitle,
+    companyName: body.jobInfo?.companyName,
+  });
+
+  try {
+    const res = await axios.post(endpoint, body, {
+      timeout: AI_TIMEOUT_MS,
+      headers: { 'Content-Type': 'application/json' },
+      validateStatus: (s) => s >= 200 && s < 300,
+    });
+
+    return res.data;
+  } catch (e) {
+    console.error('[AI FAIL RAW]', {
+      message: e.message,
+      code: e.code,          // ✅ ECONNRESET / ETIMEDOUT 같은 값
+      errno: e.errno,
+      syscall: e.syscall,
+    });
+
+    
+
+    const upstreamStatus = e?.response?.status;
+    const detailStr = e?.response?.data ? JSON.stringify(e.response.data) : '';
+    const err = new Error(`[AI match call failed] ${e.message}${detailStr ? ` | ${detailStr}` : ''}`);
+    err.status = upstreamStatus && upstreamStatus >= 400 && upstreamStatus < 500 ? upstreamStatus : 502;
+    throw err;
+  }
+}
+
 
 function assertJobInfoShape(jobInfo) {
   if (!jobInfo || typeof jobInfo !== 'object') return 'jobInfo is required';
@@ -43,7 +79,7 @@ function assertJobInfoShape(jobInfo) {
 }
 
 function computeCanCreateChecklist(gapTop3) {
-  return Array.isArray(gapTop3) && gapTop3.some(g => g?.isRequired === true);
+  return Array.isArray(gapTop3) && gapTop3.length > 0; // ✅ GAP 있으면 생성
 }
 
 // ✅ DB NOT NULL 대응: isRequired 항상 boolean, title/comment 정리
@@ -171,7 +207,7 @@ exports.createMatchAndSave = async ({ userId, cardId, fileUrl, jobInfo }) => {
       await checklistService.generateChecklistsForMatch(matchResult.matchId, userId, { reset: true });
     } catch (e) {
       // 정책: 매치는 성공시키고 체크리스트만 실패할 수 있음 (로그로만)
-      console.error('[checklist auto-gen failed]', e);
+      console.error('[checklist auto-gen failed]', { message: e?.message, stack: e?.stack });
     }
   }
 
@@ -244,4 +280,10 @@ exports.getLatestMatch = async ({ userId, cardId }) => {
     riskTop3: riskTop3.slice(0, 3),
     canCreateChecklist: computeCanCreateChecklist(gapTop3),
   };
+};
+
+module.exports = {
+  runMatchAI,
+  createMatchAndSave: exports.createMatchAndSave,
+  getLatestMatch: exports.getLatestMatch,
 };
