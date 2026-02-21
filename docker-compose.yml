@@ -30,6 +30,7 @@ services:
       - ./firebase-service-account.json:/app/firebase-service-account.json
     networks:
       - app-network
+
 networks:
   app-network:
     driver: bridge
