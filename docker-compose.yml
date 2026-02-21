@@ -27,8 +27,16 @@ services:
     env_file:
       - .env
     volumes:
-      - ./.env:/app/.env
       - ./firebase-service-account.json:/app/firebase-service-account.json
+    networks:
+      - app-network
+
+  ai-server:
+    image: jjy12163/ai-model:latest
+    container_name: ai-server
+    restart: always
+    env_file:
+      - .env
     networks:
       - app-network
 
