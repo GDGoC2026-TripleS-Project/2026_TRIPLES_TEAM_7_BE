@@ -161,9 +161,37 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  *               fileUrl:
  *                 type: string
  *                 description: 이력서 PDF URL
- *                 example: https://drive.google.com/uc?export=download&id=1PuuMEZtAQZiLUsyxDQ0wJaB6gweLClGb
  *               jobInfo:
  *                 $ref: '#/components/schemas/MatchJobInfoRequest'
+ *           example:
+ *             fileUrl: "https://piec-bucket-01.s3.ap-northeast-2.amazonaws.com/piec1/1771655935898-781900868.pdf"
+ *             jobInfo:
+ *               jobTitle: "웹 프론트엔드 개발자"
+ *               companyName: "카카오모빌리티"
+ *               employmentType:
+ *                 - "FULL_TIME"
+ *               roleText:
+ *                 - "TypeScript와 React/Next.js 기반의 카카오 T, 카카오내비 웹뷰 및 웹 서비스 아키텍처 설계 및 개발을 담당합니다."
+ *               necessaryStack:
+ *                 - "TypeScript"
+ *                 - "React"
+ *                 - "JavaScript"
+ *                 - "웹 개발"
+ *                 - "Front-end 개발"
+ *                 - "비동기 처리"
+ *               preferStack:
+ *                 - "AI 기술"
+ *                 - "Back-end"
+ *                 - "DevOps"
+ *                 - "클라우드 시스템"
+ *                 - "웹 접근성"
+ *                 - "디자인 시스템"
+ *               experienceLevel:
+ *                 - "경력직"
+ *               salaryText: "회사 내규에 따름"
+ *               workDay: ""
+ *               locationText: "경기 성남시 분당구 판교역로 152 카카오모빌리티"
+ *               deadlineAt: "2026-02-04T23:59:59.000Z"
  *     responses:
  *       200:
  *         description: 매칭 성공
@@ -176,7 +204,6 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  *       401:
  *         description: JWT 인증 실패 (토큰 누락/만료/위조)
  */
-
 router.post('/cards/:cardId/match', authenticateJWTtoken, async (req, res, next) => {
   try {
     const userId = Number(req.user?.id);
