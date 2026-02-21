@@ -53,7 +53,7 @@ exports.createCard = async({userId, url}) => {
             return 'FULL_TIME';
         };
 
-        const location = await convertAndProcessLocation(aiData.locationText);
+        const location = await convertAndProcessLocation(aiData.locationText).catch(() => null);
         
         if (!location) {
             throw new Error('위치 변환 실패');
