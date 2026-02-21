@@ -3,7 +3,12 @@ const { getCoordsFromAddress } = require('../utils/kakaoMapUtils');
 
 const convertAndProcessLocation = async (address) => {
     const coords = await getCoordsFromAddress(address);
-    if (!coords) throw new Error("좌표를 찾을 수 없는 주소입니다.");
+    // if (!coords) throw new Error("좌표를 찾을 수 없는 주소입니다.");
+
+    if (!coords) {
+        console.log(`[WARN] 좌표 변환 실패, null로 저장: ${address}`);
+        return null;  // throw 대신 null 반환
+    }
     
     // 여기서 좌표 가공 (Point 객체화 등)
     return {
