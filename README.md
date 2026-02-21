@@ -1,10 +1,8 @@
 # 2026_TRIPLES_TEAM_7_BE
 
----
+## 🧩 PIEC Backend
 
-## PIEC Backend
-
-### Overview
+### 📌 Overview
 
 PIEC는 파편화된 채용 정보를 하나의 공간에 통합하고,
 공고 기준으로 사용자의 역량을 재정렬하여 감이 아닌 **데이터 기반 선택**을 돕는 시스템입니다.
@@ -12,7 +10,7 @@ PIEC는 파편화된 채용 정보를 하나의 공간에 통합하고,
 
 ---
 
-### Tech Stack
+### 🛠 Tech Stack
 
 * Node.js
 * Express
@@ -24,7 +22,7 @@ PIEC는 파편화된 채용 정보를 하나의 공간에 통합하고,
 
 ---
 
-### Core Features (Backend)
+### ⚙ Core Features (Backend)
 
 **Authentication**
 * Firebase Google OAuth 기반 로그인
