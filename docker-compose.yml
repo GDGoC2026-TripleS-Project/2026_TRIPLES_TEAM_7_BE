@@ -30,16 +30,6 @@ services:
       - ./firebase-service-account.json:/app/firebase-service-account.json
     networks:
       - app-network
-
-  ai-server:
-    image: jjy12163/ai-model:latest
-    container_name: ai-server
-    restart: always
-    env_file:
-      - .env
-    networks:
-      - app-network
-
 networks:
   app-network:
     driver: bridge

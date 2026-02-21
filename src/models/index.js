@@ -13,7 +13,6 @@ db.sequelize = sequelize;
 
 const basename = path.basename(__filename);   // index.js
 
-
 // 하위 폴더까지 .js 파일 전부 찾기
 function listJsFiles(dir) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
