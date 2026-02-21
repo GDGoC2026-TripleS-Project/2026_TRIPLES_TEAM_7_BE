@@ -24,18 +24,11 @@ services:
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_REGION=${AWS_REGION}
       - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
+    env_file:
+      - .env
     volumes:
       - ./.env:/app/.env
       - ./firebase-service-account.json:/app/firebase-service-account.json
-    networks:
-      - app-network
-
-  ai-server:
-    image: jjy12163/ai-model:latest
-    container_name: ai-server
-    restart: always
-    env_file:
-      - .env
     networks:
       - app-network
 
