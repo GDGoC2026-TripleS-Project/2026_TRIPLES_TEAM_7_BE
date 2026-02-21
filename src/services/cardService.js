@@ -59,24 +59,34 @@ exports.createCard = async({userId, url}) => {
             throw new Error('위치 변환 실패');
         }
 
+        // 배열 → 문자열 변환 헬퍼
+        const toText = (val, sep = '\n') =>
+            Array.isArray(val) ? val.join(sep) : (val ?? '');
+
+        // employmentType: 배열이면 첫 번째 값만, null이면 기본값
+        const rawEmploymentType = Array.isArray(aiData.employmentType)
+            ? aiData.employmentType[0]
+            : aiData.employmentType;
+        const employmentType = mapEmploymentType(rawEmploymentType);
+
         // 4️⃣ job_cards 저장
         const card = await job_cards.create({
-            userId: userId,
-            jobPostId: jobPost.id,
-            fileUrl: url,
-            deadlineAt: aiData.deadlineAt ? new Date(aiData.deadlineAt) : null,
-            jobTitle: aiData.jobTitle,
-            companyName: aiData.companyName,
-            employmentType: mapEmploymentType(aiData.employmentType[0]),
-            roleText: aiData.roleText.join(', '),
-            necessaryStack: aiData.necessaryStack,
-            preferStack: aiData.preferStack,
-            salaryText: aiData.salaryText,
-            locationText: aiData.locationText,
-            experienceLevel: aiData.experienceLevel.join(', '),
-            workDay: aiData.workDay,
-            addressPoint: location,
-            cardStatus: 'CANVAS',
+            userId:          userId,
+            jobPostId:       jobPost.id,
+            fileUrl:         url,
+            deadlineAt:      aiData.deadlineAt ? new Date(aiData.deadlineAt) : null,
+            jobTitle:        aiData.jobTitle,
+            companyName:     aiData.companyName,
+            employmentType:  employmentType,
+            roleText:        toText(aiData.roleText, '\n'),       // Array → 줄바꿈 join
+            necessaryStack:  aiData.necessaryStack ?? [],          // JSON 그대로
+            preferStack:     aiData.preferStack ?? [],             // JSON 그대로
+            salaryText:      aiData.salaryText ?? null,
+            locationText:    aiData.locationText ?? null,
+            experienceLevel: toText(aiData.experienceLevel, ', '), // Array → 쉼표 join
+            workDay:         aiData.workDay ?? null,
+            addressPoint:    location,
+            cardStatus:      'CANVAS',
         }, { transaction: t });
 
         // 5️⃣ canvas 기본 위치 생성
