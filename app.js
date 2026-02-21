@@ -42,7 +42,7 @@ console.log('[swagger] typeof specs:', typeof specs);
 console.log('[swagger] openapi:', specs && specs.openapi, 'keys:', specs && Object.keys(specs));
 
 app.use(cors({
-  origin: ["http://localhost:3000"],
+  origin: true,
   credentials: true,
   exposedHeaders: ["Authorization"], 
 }));
