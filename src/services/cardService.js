@@ -53,11 +53,11 @@ exports.createCard = async({userId, url}) => {
             return 'FULL_TIME';
         };
 
-        const location = await convertAndProcessLocation(aiData.locationText).catch(() => null);
+        const location = await convertAndProcessLocation(aiData.locationText);
         
-        if (!location) {
-            throw new Error('위치 변환 실패');
-        }
+        // if (!location) {
+        //     throw new Error('위치 변환 실패');
+        // }
 
         // 배열 → 문자열 변환 헬퍼
         const toText = (val, sep = '\n') =>
