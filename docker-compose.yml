@@ -34,8 +34,8 @@ services:
     image: jjy12163/ai-model:latest
     container_name: ai-server
     restart: always
-    volumes:
-      - ./.env:/app/.env
+    env_file:
+      - .env
     networks:
       - app-network
 
