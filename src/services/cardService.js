@@ -33,7 +33,7 @@ exports.createCard = async({userId, url}) => {
         
         // 1️⃣ AI 호출 (지금은 로컬 API라고 가정)
         const aiResponse = await axios.post(
-        'http://localhost:8080/api/ai/test-job',
+        'http://52.78.20.212/fastapi/api/extract',
         { url }
         );
 
@@ -82,8 +82,8 @@ exports.createCard = async({userId, url}) => {
         // 5️⃣ canvas 기본 위치 생성
         await canvas_items.create({
             cardId: card.id,
-            canvas_x: 100,
-            canvas_y: 100,
+            canvas_x: 692,
+            canvas_y: 317,
         }, { transaction: t });
 
         await t.commit();
