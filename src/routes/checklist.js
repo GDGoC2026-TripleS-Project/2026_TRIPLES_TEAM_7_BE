@@ -67,10 +67,10 @@
  *           example: true
  *         keywords:
  *           type: array
- *           description: GAP 키워드(2~5개)
+ *           description: GAP 키워드(1개)
  *           items:
  *             type: string
- *           example: ["TypeScript", "정적 타이핑", "Interface"]
+ *           example: ["TypeScript"]
  *         checklists:
  *           type: array
  *           items:
@@ -509,7 +509,7 @@ router.get('/checklists/all-with-card', authenticateJWTtoken, async (req, res, n
 
 
 // -------------------------------------
-// GET /api/matches/:matchId/gap-checklists-with-card
+// GET /api/matches/:matchId/checklists-with-card
 // -------------------------------------
 /**
  * @swagger

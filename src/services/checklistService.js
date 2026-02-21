@@ -200,7 +200,7 @@ async function generateChecklistsForMatch(matchId, userId, { reset = false } = {
 
   const normalized = results.map(item => ({
     matchResultId: Number(item.matchResultId ?? item.id),
-    keywords: Array.isArray(item.keywords) ? item.keywords : [],
+    keywords: Array.isArray(item.keywords) ? item.keywords.slice(0, 1) : [], // ✅ 1개로 자르기
     tasks: Array.isArray(item.tasks) ? item.tasks : [],
   }));
 
