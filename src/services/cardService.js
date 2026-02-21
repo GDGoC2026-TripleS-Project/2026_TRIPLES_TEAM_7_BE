@@ -175,12 +175,9 @@ exports.getCard = async ({ userId, cardId }) => {
         where: { cardId: cardId }
     });
 
-    console.log(result);
-
-    const matchPercent = result.dataValues.matchPercent;
-    console.log(matchPercent);
-
-
+    // null 체크 추가
+    const matchPercent = result ? result.dataValues.matchPercent : null;
+    
     return {
         id: card.id,
         userId: card.userId,
