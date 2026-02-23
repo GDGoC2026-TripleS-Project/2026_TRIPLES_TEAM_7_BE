@@ -61,6 +61,34 @@ async function runMatchAI(payload) {
   }
 }
 
+function toArray(v, sep = '\n') {
+  if (Array.isArray(v)) return v;
+  if (typeof v === 'string') {
+    return v.split(sep).map(s => s.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+function normalizeJobInfo(jobInfo) {
+  if (!jobInfo || typeof jobInfo !== 'object') return jobInfo; // 여기서 assert가 잡게 둠
+  
+
+  return {
+    ...jobInfo,
+    employmentType: toArray(jobInfo.employmentType, ','),
+    roleText: toArray(jobInfo.roleText, '\n'),
+    necessaryStack: toArray(jobInfo.necessaryStack, ','),
+    preferStack: toArray(jobInfo.preferStack, ','),
+    experienceLevel: toArray(jobInfo.experienceLevel, ','),
+    salaryText: typeof jobInfo.salaryText === 'string' ? jobInfo.salaryText : (jobInfo.salaryText ?? ''),
+    workDay: typeof jobInfo.workDay === 'string' ? jobInfo.workDay : (jobInfo.workDay ?? ''),
+    locationText: typeof jobInfo.locationText === 'string' ? jobInfo.locationText : (jobInfo.locationText ?? ''),
+    deadlineAt: typeof jobInfo.deadlineAt === 'string'
+      ? jobInfo.deadlineAt
+      : (jobInfo.deadlineAt ? new Date(jobInfo.deadlineAt).toISOString() : new Date().toISOString()),
+  };
+}
+
 
 function assertJobInfoShape(jobInfo) {
   if (!jobInfo || typeof jobInfo !== 'object') return 'jobInfo is required';
@@ -123,13 +151,20 @@ exports.createMatchAndSave = async ({ userId, cardId, fileUrl, jobInfo }) => {
     throw err;
   }
 
+  // ✅ jobInfo가 string(JSON)으로 오면 파싱
+  if (typeof jobInfo === 'string') {
+    try { jobInfo = JSON.parse(jobInfo); } catch (_) {}
+  }
+
+  // ✅ jobInfo normalize (string -> array)
+  jobInfo = normalizeJobInfo(jobInfo);
+
   const shapeError = assertJobInfoShape(jobInfo);
   if (shapeError) {
     const err = new Error(shapeError);
     err.status = 400;
     throw err;
   }
-
   // 0-1) 카드 소유권 체크
   const card = await db.job_cards.findOne({ where: { id: cardId, userId } });
   if (!card) {
