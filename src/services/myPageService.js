@@ -10,15 +10,23 @@ const updateUserAddress = async (userId, address) => {
             throw new Error('주소 변환 실패');
         }
 
-        await User.findOrCreate(
-            { 
-                address: address,       // 도로명 주소 (String)
-                addressPoint: addressPoint, // 지리 정보 (Point)
-            },{ 
-                where: { id: userId } // req.user.id에서 넘어온 값
-            }
-        );
-        
+        const [addressRecord, created] = await User.findOrCreate({ 
+            // 1. 찾기 위한 조건
+            where: { id: userId }, 
+
+            // 2. 만약 데이터가 없어서 새로 만들 때 넣을 기본값
+            defaults: { 
+                address: address, 
+                addressPoint: addressPoint 
+            } 
+        });
+
+        if(!created) {
+            // 이미 존재한다면 업데이트
+            await addressRecord.update({ address: address, addressPoint: addressPoint  });
+        }
+
+
         return { address };
     } catch (error) {
         console.error("주소 업데이트 중 오류 발생:", error.message);
@@ -38,10 +46,22 @@ const updateUserResume = async (userid, resumeUrl) => {
         }
         const userId = Number(userid);
         
-        await resumes.findOrCreate(
-            { fileUrl: resumeUrl },
-            { where: { userId: userId } }
-        );
+        if (!userId) {
+            throw new Error("userId이 유효하지 않습니다.");
+        }
+        
+        const [resumeRecord, created] = await resumes.findOrCreate({
+            where: { userId: userId }, // 이 값이 undefined면 에러 발생!
+            defaults: { 
+                fileUrl: resumeUrl,
+                userId: userId // 새로 생성될 때 들어갈 값
+            }
+        });
+
+        if(!created) {
+            // 이미 존재한다면 업데이트
+            await resumeRecord.update({ fileUrl: resumeUrl });
+        }
         return { resumeUrl };
     } catch (error) {
         console.error("이력서 URL 업데이트 중 오류 발생:", error.message);
