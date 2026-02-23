@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const matchService = require('../services/matchService');
 const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
+const db = require('../models'); 
 
 /**
  * @swagger
@@ -217,8 +218,41 @@ router.post('/cards/:cardId/match', authenticateJWTtoken, async (req, res, next)
     if (!cardId || Number.isNaN(cardId)) {
       return res.status(400).json({ ok: false, message: 'cardId is invalid' });
     }
-    if (!fileUrl || typeof fileUrl !== 'string') {
-      return res.status(400).json({ ok: false, message: 'fileUrl is required' });
+    // ✅ jobInfo 없으면 카드에서 조립
+    if (!jobInfo) {
+      const card = await db.job_cards.findOne({ where: { id: cardId, userId } });
+      if (!card) return res.status(404).json({ ok: false, message: 'card not found' });
+
+      // fileUrl도 없으면 카드에서 보강
+      if (!fileUrl) fileUrl = card.fileUrl;
+
+      // employmentType 정규화(카드에 enum이 이미 들어가면 그대로 통과)
+      const et = card.employmentType;
+      const normalizedEmploymentType =
+        et === 'FULL_TIME' || et === 'CONTRACT' || et === 'INTERN'
+          ? et
+          : (String(et).includes('정규직') ? 'FULL_TIME'
+            : String(et).includes('계약') ? 'CONTRACT'
+            : String(et).includes('인턴') ? 'INTERN'
+            : 'FULL_TIME');
+
+      jobInfo = {
+        jobTitle: card.jobTitle,
+        companyName: card.companyName,
+        employmentType: [normalizedEmploymentType],
+        roleText: card.roleText ? String(card.roleText).split('\n').filter(Boolean) : [],
+        necessaryStack: card.necessaryStack ?? [],
+        preferStack: card.preferStack ?? [],
+        experienceLevel: card.experienceLevel
+          ? String(card.experienceLevel).split(',').map(s => s.trim()).filter(Boolean)
+          : [],
+        salaryText: card.salaryText ?? '',
+        workDay: card.workDay ?? '',
+        locationText: card.locationText ?? '',
+        deadlineAt: card.deadlineAt
+          ? new Date(card.deadlineAt).toISOString()
+          : new Date().toISOString(),
+      };
     }
 
     // 그 다음 서비스 호출 (result는 1번만 선언)
