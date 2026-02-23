@@ -10,7 +10,7 @@ const updateUserAddress = async (userId, address) => {
             throw new Error('주소 변환 실패');
         }
 
-        await User.update(
+        await User.findOrCreate(
             { 
                 address: address,       // 도로명 주소 (String)
                 addressPoint: addressPoint, // 지리 정보 (Point)
@@ -38,7 +38,7 @@ const updateUserResume = async (userid, resumeUrl) => {
         }
         const userId = Number(userid);
         
-        await resumes.update(
+        await resumes.findOrCreate(
             { fileUrl: resumeUrl },
             { where: { userId: userId } }
         );
