@@ -33,14 +33,14 @@ const updateUserAddress = async (userId, address) => {
  */
 const updateUserResume = async (userid, resumeUrl) => {
     try {
-        if (resumeUrl == null) {
+        if (!resumeUrl) {
             throw new Error("이력서 URL이 유효하지 않습니다.");
         }
         const userId = Number(userid);
         
         await resumes.update(
             { fileUrl: resumeUrl },
-            { where: { id: userId } }
+            { where: { userId: userId } }
         );
         return { resumeUrl };
     } catch (error) {
