@@ -181,8 +181,6 @@ router.post('/ai/test-job', cardController.analyzeJobPosting);
  *       작업 ID(jobId)를 즉시 반환합니다.
  *       실제 카드 생성 완료 여부는 `/api/card/status/:jobId`로 폴링하여 확인하세요.
  *     tags: [Cards]
- *     security:
- *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -252,8 +250,6 @@ router.post('/card/create', authenticateJWTtoken, cardController.createCard);
  *       `/api/card/create`에서 받은 jobId로 작업 진행 상태를 확인합니다.
  *       status가 `DONE`이 될 때까지 주기적으로 폴링하세요. (권장: 3초 간격)
  *     tags: [Cards]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: jobId
