@@ -6,7 +6,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 async function generateChecklists(gapItems) {
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
+    model: "gemini-3-flash",
     generationConfig: { responseMimeType: "application/json" }
   });
 
@@ -74,7 +74,7 @@ JSON 외의 어떤 문자도 출력하지 마라.
 // ✅ 면접 질문 3개 생성 
 async function generateInterviewQuestions(interviewInputs) {
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
+    model: "gemini-3-flash",
     generationConfig: { responseMimeType: "application/json" }
   });
 
