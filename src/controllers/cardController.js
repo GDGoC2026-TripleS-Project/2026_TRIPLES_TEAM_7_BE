@@ -1,4 +1,5 @@
 const cardService = require('../services/cardService');
+const jobStore = require('../services/jobStore');
 
 exports.analyzeJobPosting = async (req, res) => {
   try {
