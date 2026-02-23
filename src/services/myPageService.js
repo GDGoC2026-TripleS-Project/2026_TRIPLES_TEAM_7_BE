@@ -28,14 +28,15 @@ const updateUserAddress = async (userId, address) => {
 
 /**
  * 유저 이력서 URL 업데이트
- * @param {string} userId - 유저 고유 ID
+ * @param {integer} userId - 유저 고유 ID
  * @param {string} resumeUrl - PDF 파일이 저장된 URL 경로
  */
-const updateUserResume = async (userId, resumeUrl) => {
+const updateUserResume = async (userid, resumeUrl) => {
     try {
         if (!resumeUrl) {
             throw new Error("이력서 URL이 유효하지 않습니다.");
         }
+        const userId = Number(userid);
         
         await resumes.update(
             { fileUrl: resumeUrl },
