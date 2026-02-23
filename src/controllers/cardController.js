@@ -17,32 +17,77 @@ exports.analyzeJobPosting = async (req, res) => {
   }
 };
 
+// exports.createCard = async (req, res) => {
+//   try{
+//     const { url } = req.body;
+
+//     if (!url) {
+//       return res.status(400).json({ isSuccess: false, code: 'CARD-401', message: 'url은 필수입니다.' });
+//     }
+
+//     const userId = req.user.id;
+//     if (!Number.isInteger(userId)) {
+//       return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'token required' });
+//     }
+      
+//     const result = await cardService.createCard({userId, url});
+      
+//     return res.status(200).json({
+//       isSuccess: true,
+//       code: 'SUCCESS-200',
+//       message: '카드를 성공적으로 생성했습니다.',
+//       data: result,
+//     });
+
+//   }catch(error){
+//     console.error(error);
+//     return res.status(400).json({ isSuccess: false, code: 'CARD-402', message: '카드 생성 중 문제가 발생하였습니다.' });
+//   }
+// };
+
+// 카드 생성 요청 → jobId 즉시 반환
 exports.createCard = async (req, res) => {
-  try{
-    const { url } = req.body;
+    try {
+        const { url } = req.body;
+        if (!url) {
+            return res.status(400).json({ isSuccess: false, code: 'CARD-401', message: 'url은 필수입니다.' });
+        }
 
-    if (!url) {
-      return res.status(400).json({ isSuccess: false, code: 'CARD-401', message: 'url은 필수입니다.' });
+        const userId = req.user.id;
+        if (!Number.isInteger(userId)) {
+            return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'token required' });
+        }
+
+        const jobId = cardService.createCardAsync({ userId, url });
+
+        return res.status(202).json({
+            isSuccess: true,
+            code: 'ACCEPTED-202',
+            message: '카드 생성 작업이 시작되었습니다.',
+            data: { jobId }
+        });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(400).json({ isSuccess: false, code: 'CARD-402', message: '카드 생성 중 문제가 발생하였습니다.' });
+    }
+};
+
+// 상태 폴링 엔드포인트
+exports.getCardStatus = (req, res) => {
+    const { jobId } = req.params;
+    const job = jobStore.getJob(jobId);
+
+    if (!job) {
+        return res.status(404).json({ isSuccess: false, code: 'CARD-404', message: '존재하지 않는 작업입니다.' });
     }
 
-    const userId = req.user.id;
-    if (!Number.isInteger(userId)) {
-      return res.status(401).json({ isSuccess: false, code: 'AUTH-401', message: 'token required' });
-    }
-      
-    const result = await cardService.createCard({userId, url});
-      
     return res.status(200).json({
-      isSuccess: true,
-      code: 'SUCCESS-200',
-      message: '카드를 성공적으로 생성했습니다.',
-      data: result,
+        isSuccess: true,
+        status: job.status,   // 'PENDING' | 'DONE' | 'FAILED'
+        data: job.result,
+        error: job.error,
     });
-
-  }catch(error){
-    console.error(error);
-    return res.status(400).json({ isSuccess: false, code: 'CARD-402', message: '카드 생성 중 문제가 발생하였습니다.' });
-  }
 };
 
 exports.deleteCard = async(req, res) => {
