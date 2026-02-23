@@ -99,52 +99,44 @@ async function setAllCardsToInterview(userId) {
  * - DB 전제: interview_questions에 keywords(JSON) 컬럼 존재
  */
 async function generateInterviewQuestionsForCard(cardId, userId, { reset = true } = {}) {
-  const t = await db.sequelize.transaction();
+  const owned = await requireOwnedCard(cardId, userId);
+  if (!owned.ok) return owned.res;
+  
+  const card = owned.card;
+
+  const aiInput = {
+    jobTitle: card.jobTitle,
+    companyName: card.companyName,
+    roleText: card.roleText,
+    necessaryStack: card.necessaryStack,
+    preferStack: card.preferStack,
+  };
+
   try {
-    const owned = await requireOwnedCard(cardId, userId, t);
-    if (!owned.ok) {
-      await t.rollback();
-      return owned.res;
-    }
-    const card = owned.card;
-
-    // 카드가 INTERVIEW가 아니면 충돌로 막기
-    if (card.cardStatus !== 'INTERVIEW') {
-      await t.rollback();
-      return { isSuccess: false, code: 'INVALID_STATE', message: 'card is not INTERVIEW status' };
-    }
-
-    // ✅ 무조건 기존 질문 제거
-    await deactivateActiveSets(card.id, t, { hardDeleteQuestions: true });
-
-
-    const aiInput = {
-      jobTitle: card.jobTitle,
-      companyName: card.companyName,
-      roleText: card.roleText,
-      necessaryStack: card.necessaryStack,
-      preferStack: card.preferStack,
-    };
-
-    // ✅ geminiService는 { items: [{questionText, keywords:[k1,k2]} ...] } 를 반환해야 함
+    
     const ai = await generateInterviewQuestions(aiInput);
-
     const items = normalizeAiItems(ai);
 
-    // ✅ 검증: 3개 + 각 키워드 2개
+        // ✅ 검증: 3개 + 각 키워드 2개
     if (items.length !== 3 || items.some((it) => it.keywords.length !== 2)) {
-      await t.rollback();
       return {
         isSuccess: false,
         code: 'AI-502',
         message: 'AI did not return 3 items with 2 keywords each',
       };
     }
+  const t = await db.sequelize.transaction();
+  try {
+    // ✅ 무조건 기존 질문 제거
+    await deactivateActiveSets(card.id, t, { hardDeleteQuestions: true });
+
+
 
     const set = await db.interview_question_sets.create(
       { cardId: card.id, isActive: true },
       { transaction: t }
     );
+
 
     await db.interview_questions.bulkCreate(
       items.map((it, idx) => ({
@@ -179,13 +171,17 @@ async function generateInterviewQuestionsForCard(cardId, userId, { reset = true 
         })),
       },
     };
-  } catch (error) {
+  } catch (dberrror) {
+    await t.rollback();
+    throw dberrror;
+  } 
+}
+catch (error) {
     await t.rollback();
     console.error('AI 면접 질문 생성 실패:', error);
     throw error;
   }
 }
-
 /**
  * 4.3 활성 질문 조회 (+키워드 포함)
  */
