@@ -5,7 +5,7 @@ const checklistService = require('./checklistService'); // ✅ 자동 체크리�
 
 const axios = require('axios');
 
-const AI_BASE_URL = process.env.AI_BASE_URL || 'http://52.78.20.212/fastapi';
+const AI_BASE_URL = process.env.AI_BASE_URL || 'http://piec.store/fastapi';
 const AI_MATCH_PATH = process.env.AI_MATCH_PATH || '/match';
 const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 30000);
 

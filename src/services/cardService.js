@@ -33,7 +33,7 @@ exports.createCard = async({userId, url}) => {
         
         // 1️⃣ AI 호출 (지금은 로컬 API라고 가정)
         const aiResponse = await axios.post(
-        'http://52.78.20.212/fastapi/api/extract',
+        'http://piec.store/fastapi/api/extract',
         { url }
         );
 
