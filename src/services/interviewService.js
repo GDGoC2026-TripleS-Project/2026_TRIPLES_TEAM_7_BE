@@ -79,7 +79,7 @@ async function setAllCardsToInterview(userId) {
   try {
     const [updatedCount] = await db.job_cards.update(
       { cardStatus: 'INTERVIEW' },
-      { where: { userId } }
+      { where: { userId: userId, deletedAt: null } }
     );
 
     return {
