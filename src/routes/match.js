@@ -15,7 +15,7 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  * @swagger
  * components:
  *   schemas:
- *     MatchJobInfoRequest:src/models/matching/match_percent.js
+ *     MatchJobInfoRequest:
  *       type: object
  *       required:
  *         - jobTitle
@@ -74,7 +74,7 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  *         deadlineAt:
  *           type: string
  *           format: date-time
- *           example: 2026-02-04T23:59:59.000Z
+ *           example: "2026-02-04T23:59:59.000Z"
  *
  *     MatchTopItem:
  *       type: object
@@ -111,10 +111,10 @@ const authenticateJWTtoken = require('../../middleware/authenticateToken.js');
  *         createdAt:
  *           type: string
  *           format: date-time
- *           example: 2026-02-09T08:34:29.287Z
+ *           example: "2026-02-09T08:34:29.287Z"
  *         sourceFileUrl:
  *           type: string
- *           example: https://.../resume.pdf
+ *           example: "https://.../resume.pdf"
  *         strengthTop3:
  *           type: array
  *           items:
