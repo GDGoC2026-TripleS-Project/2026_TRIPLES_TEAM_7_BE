@@ -209,8 +209,7 @@ router.post('/cards/:cardId/match', authenticateJWTtoken, async (req, res, next)
   try {
     const userId = Number(req.user?.id);
     const cardId = Number(req.params.cardId);
-    const { fileUrl, jobInfo } = req.body;
-
+    let { fileUrl, jobInfo } = req.body;
     // 먼저 검증
     if (!userId || Number.isNaN(userId)) {
       return res.status(400).json({ ok: false, message: 'userId is required' });
@@ -218,41 +217,42 @@ router.post('/cards/:cardId/match', authenticateJWTtoken, async (req, res, next)
     if (!cardId || Number.isNaN(cardId)) {
       return res.status(400).json({ ok: false, message: 'cardId is invalid' });
     }
-    // ✅ jobInfo 없으면 카드에서 조립
-    if (!jobInfo) {
+     // ✅ jobInfo/fileUrl 중 하나라도 없으면 카드 조회해서 보강
+    if (!jobInfo || !fileUrl) {
       const card = await db.job_cards.findOne({ where: { id: cardId, userId } });
       if (!card) return res.status(404).json({ ok: false, message: 'card not found' });
 
-      // fileUrl도 없으면 카드에서 보강
       if (!fileUrl) fileUrl = card.fileUrl;
 
-      // employmentType 정규화(카드에 enum이 이미 들어가면 그대로 통과)
-      const et = card.employmentType;
-      const normalizedEmploymentType =
-        et === 'FULL_TIME' || et === 'CONTRACT' || et === 'INTERN'
-          ? et
-          : (String(et).includes('정규직') ? 'FULL_TIME'
-            : String(et).includes('계약') ? 'CONTRACT'
-            : String(et).includes('인턴') ? 'INTERN'
-            : 'FULL_TIME');
+      if (!jobInfo) {
+        const et = card.employmentType;
+        const normalizedEmploymentType =
+          et === 'FULL_TIME' || et === 'CONTRACT' || et === 'INTERN'
+            ? et
+            : (String(et).includes('정규직') ? 'FULL_TIME'
+              : String(et).includes('계약') ? 'CONTRACT'
+              : String(et).includes('인턴') ? 'INTERN'
+              : 'FULL_TIME');
 
-      jobInfo = {
-        jobTitle: card.jobTitle,
-        companyName: card.companyName,
-        employmentType: [normalizedEmploymentType],
-        roleText: card.roleText ? String(card.roleText).split('\n').filter(Boolean) : [],
-        necessaryStack: card.necessaryStack ?? [],
-        preferStack: card.preferStack ?? [],
-        experienceLevel: card.experienceLevel
-          ? String(card.experienceLevel).split(',').map(s => s.trim()).filter(Boolean)
-          : [],
-        salaryText: card.salaryText ?? '',
-        workDay: card.workDay ?? '',
-        locationText: card.locationText ?? '',
-        deadlineAt: card.deadlineAt
-          ? new Date(card.deadlineAt).toISOString()
-          : new Date().toISOString(),
-      };
+        const d = card.deadlineAt ? new Date(card.deadlineAt) : null;
+        const deadlineISO = (d && !Number.isNaN(d.getTime())) ? d.toISOString() : new Date().toISOString();
+
+        jobInfo = {
+          jobTitle: card.jobTitle,
+          companyName: card.companyName,
+          employmentType: [normalizedEmploymentType],
+          roleText: card.roleText ? String(card.roleText).split('\n').filter(Boolean) : [],
+          necessaryStack: card.necessaryStack ?? [],
+          preferStack: card.preferStack ?? [],
+          experienceLevel: card.experienceLevel
+            ? String(card.experienceLevel).split(',').map(s => s.trim()).filter(Boolean)
+            : [],
+          salaryText: card.salaryText ?? '',
+          workDay: card.workDay ?? '',
+          locationText: card.locationText ?? '',
+          deadlineAt: deadlineISO,
+        };
+      }
     }
 
     // 그 다음 서비스 호출 (result는 1번만 선언)
