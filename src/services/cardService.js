@@ -130,7 +130,7 @@ exports.createCardAsync = ({ userId, url }) => {
 async function processCard({ userId, url, jobId }) {
     const t = await sequelize.transaction();
     try {
-        const site = detectJobSource(url); // this. 제거 (exports 함수라 this 안됨)
+        const site = exports.detectJobSource(url); // this. 제거 (exports 함수라 this 안됨)
 
         const aiResponse = await axios.post(
             'http://piec.store/fastapi/api/extract', // https로 수정
