@@ -215,7 +215,7 @@ exports.createMatchAndSave = async ({ userId, cardId, fileUrl, jobInfo }) => {
 };
 
 /**
- * 최신 매칭 조회 (이미 너가 쓰고 있다면 그대로 유지하면 됨)
+ * 최신 매칭 조회 
  * - match_percent: cardId별 최신 1개
  * - match_result: 해당 matchId 9개
  * - improve_checklist는 별도 API(/matches/:matchId/checklists)로 조회하는 구조라면 여기서는 생략 가능
