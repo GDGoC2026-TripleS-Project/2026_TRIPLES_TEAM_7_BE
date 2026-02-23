@@ -1,6 +1,8 @@
 const axios = require('axios');
 const { job_cards, job_posts, canvas_items, sequelize, match_percent } = require('../models');
 const convertAndProcessLocation = require('./mapService');
+const { v4: uuidv4 } = require('uuid');
+const jobStore = require('./jobStore');
 
 exports.analyzeJob = async (url) => {
     console.log("분석 요청 URL:", url);
@@ -23,30 +25,127 @@ exports.analyzeJob = async (url) => {
 
 
 
-exports.createCard = async({userId, url}) => {
+// exports.createCard = async({userId, url}) => {
 
+//     const t = await sequelize.transaction();
+
+//     try {
+        
+//         const site = this.detectJobSource(url)
+        
+//         // 1️⃣ AI 호출 (지금은 로컬 API라고 가정)
+//         const aiResponse = await axios.post(
+//         'http://piec.store/fastapi/api/extract',
+//         { url }
+//         );
+
+//         const aiData = aiResponse.data;
+        
+//         // 2️⃣ job_posts 저장
+//         const jobPost = await job_posts.create({
+//             jobTitle: site,
+//             originalUrl: url,
+//         }, { transaction: t });
+
+//         // 3️⃣ employmentType 매핑 (ENUM 변환)
+//         const mapEmploymentType = (text) => {
+//             if (text.includes('정규직')) return 'FULL_TIME';
+//             if (text.includes('계약')) return 'CONTRACT';
+//             if (text.includes('인턴')) return 'INTERN';
+//             return 'FULL_TIME';
+//         };
+
+//         const location = await convertAndProcessLocation(aiData.locationText);
+        
+//         // if (!location) {
+//         //     throw new Error('위치 변환 실패');
+//         // }
+
+//         // 배열 → 문자열 변환 헬퍼
+//         const toText = (val, sep = '\n') =>
+//             Array.isArray(val) ? val.join(sep) : (val ?? '');
+
+//         // employmentType: 배열이면 첫 번째 값만, null이면 기본값
+//         const rawEmploymentType = Array.isArray(aiData.employmentType)
+//             ? aiData.employmentType[0]
+//             : aiData.employmentType;
+//         const employmentType = mapEmploymentType(rawEmploymentType);
+
+//         // 4️⃣ job_cards 저장
+//         const card = await job_cards.create({
+//             userId:          userId,
+//             jobPostId:       jobPost.id,
+//             fileUrl:         url,
+//             deadlineAt:      aiData.deadlineAt ? new Date(aiData.deadlineAt) : null,
+//             jobTitle:        aiData.jobTitle,
+//             companyName:     aiData.companyName,
+//             employmentType:  employmentType,
+//             roleText:        toText(aiData.roleText, '\n'),       // Array → 줄바꿈 join
+//             necessaryStack:  aiData.necessaryStack ?? [],          // JSON 그대로
+//             preferStack:     aiData.preferStack ?? [],             // JSON 그대로
+//             salaryText:      aiData.salaryText ?? null,
+//             locationText:    aiData.locationText ?? null,
+//             experienceLevel: toText(aiData.experienceLevel, ', '), // Array → 쉼표 join
+//             workDay:         aiData.workDay ?? null,
+//             addressPoint:    location,
+//             cardStatus:      'CANVAS',
+//         }, { transaction: t });
+
+//         // 5️⃣ canvas 기본 위치 생성
+//         await canvas_items.create({
+//             cardId: card.id,
+//             canvas_x: 692,
+//             canvas_y: 317,
+//         }, { transaction: t });
+
+//         await t.commit();
+
+//         return {
+//             cardId: card.id,
+//             message: '카드 생성 완료',
+//         };
+
+//     } catch (error) {
+//         await t.rollback();
+//         throw error;
+//     }
+
+// }
+
+// 즉시 반환 - 백그라운드 실행
+exports.createCardAsync = ({ userId, url }) => {
+    const jobId = uuidv4();
+    jobStore.createJob(jobId);
+
+    // 백그라운드 실행 (await 없이)
+    processCard({ userId, url, jobId }).catch((err) => {
+        console.error('백그라운드 처리 실패:', err);
+        jobStore.updateJob(jobId, { status: 'FAILED', error: err.message });
+    });
+
+    return jobId;
+};
+
+// 실제 처리 로직 (기존 createCard 내용)
+async function processCard({ userId, url, jobId }) {
     const t = await sequelize.transaction();
-
     try {
-        
-        const site = this.detectJobSource(url)
-        
-        // 1️⃣ AI 호출 (지금은 로컬 API라고 가정)
-        const aiResponse = await axios.post(
-        'http://piec.store/fastapi/api/extract',
-        { url }
-        );
+        const site = detectJobSource(url); // this. 제거 (exports 함수라 this 안됨)
 
+        const aiResponse = await axios.post(
+            'http://piec.store/fastapi/api/extract', // https로 수정
+            { url },
+            { timeout: 600000 }
+        );
         const aiData = aiResponse.data;
-        
-        // 2️⃣ job_posts 저장
+
         const jobPost = await job_posts.create({
             jobTitle: site,
             originalUrl: url,
         }, { transaction: t });
 
-        // 3️⃣ employmentType 매핑 (ENUM 변환)
         const mapEmploymentType = (text) => {
+            if (!text) return 'FULL_TIME';
             if (text.includes('정규직')) return 'FULL_TIME';
             if (text.includes('계약')) return 'CONTRACT';
             if (text.includes('인턴')) return 'INTERN';
@@ -54,42 +153,31 @@ exports.createCard = async({userId, url}) => {
         };
 
         const location = await convertAndProcessLocation(aiData.locationText);
-        
-        // if (!location) {
-        //     throw new Error('위치 변환 실패');
-        // }
-
-        // 배열 → 문자열 변환 헬퍼
         const toText = (val, sep = '\n') =>
             Array.isArray(val) ? val.join(sep) : (val ?? '');
-
-        // employmentType: 배열이면 첫 번째 값만, null이면 기본값
         const rawEmploymentType = Array.isArray(aiData.employmentType)
             ? aiData.employmentType[0]
             : aiData.employmentType;
-        const employmentType = mapEmploymentType(rawEmploymentType);
 
-        // 4️⃣ job_cards 저장
         const card = await job_cards.create({
-            userId:          userId,
+            userId,
             jobPostId:       jobPost.id,
             fileUrl:         url,
             deadlineAt:      aiData.deadlineAt ? new Date(aiData.deadlineAt) : null,
             jobTitle:        aiData.jobTitle,
             companyName:     aiData.companyName,
-            employmentType:  employmentType,
-            roleText:        toText(aiData.roleText, '\n'),       // Array → 줄바꿈 join
-            necessaryStack:  aiData.necessaryStack ?? [],          // JSON 그대로
-            preferStack:     aiData.preferStack ?? [],             // JSON 그대로
+            employmentType:  mapEmploymentType(rawEmploymentType),
+            roleText:        toText(aiData.roleText, '\n'),
+            necessaryStack:  aiData.necessaryStack ?? [],
+            preferStack:     aiData.preferStack ?? [],
             salaryText:      aiData.salaryText ?? null,
             locationText:    aiData.locationText ?? null,
-            experienceLevel: toText(aiData.experienceLevel, ', '), // Array → 쉼표 join
+            experienceLevel: toText(aiData.experienceLevel, ', '),
             workDay:         aiData.workDay ?? null,
             addressPoint:    location,
             cardStatus:      'CANVAS',
         }, { transaction: t });
 
-        // 5️⃣ canvas 기본 위치 생성
         await canvas_items.create({
             cardId: card.id,
             canvas_x: 692,
@@ -98,16 +186,17 @@ exports.createCard = async({userId, url}) => {
 
         await t.commit();
 
-        return {
-            cardId: card.id,
-            message: '카드 생성 완료',
-        };
+        // 완료 상태 업데이트
+        jobStore.updateJob(jobId, {
+            status: 'DONE',
+            result: { cardId: card.id, message: '카드 생성 완료' }
+        });
 
     } catch (error) {
         await t.rollback();
+        jobStore.updateJob(jobId, { status: 'FAILED', error: error.message });
         throw error;
     }
-
 }
 
 exports.detectJobSource = (url) => {
